@@ -1,0 +1,25 @@
+*.swp
+*.swo
+*~
+.directory
+!.gitignore
+.DS_Store
+target
+.idea
+/.sbtconfig
+*.class
+*.log
+# sbt specific
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+# Scala-IDE specific
+.scala_dependencies
+.project
+.settings
+*.log
+*.sublime-project
+*.sublime-workspace
