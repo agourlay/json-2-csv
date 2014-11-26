@@ -2,9 +2,9 @@ json-2-csv-stream [![Build Status](https://travis-ci.org/agourlay/json-2-csv-str
 =========
 
 
-- transform a file containing a collection of JSON into a CSV file.
-- nested object are turned into extra columns.
-- works in a streaming fashion allowing the processing of very large file.
+- transforms a file containing a collection of JSON into a CSV file.
+- nested objects are turned into extra columns.
+- works in a streaming fashion allowing the processing of very large files.
 - the JSON objects at the collection level must share a common structure. 
 
 ## Status
@@ -87,9 +87,9 @@ value a2, value c2, value d2,          ,          ,value k2, value l2
 
 ## Todos
 
-- clean code
-- more unit-tests
-- proper logging
+- clean code.
+- more unit-tests.
+- proper logging.
 - extract column separator to config file.
 - perfomance optim. (duplicate sorting, fusion mapping, usage of Vector...)
 - publish either as a lib or as a runnable jar.
