@@ -74,7 +74,7 @@ A json file containing a collection of one object like this
 ]
 ```
 
-will be transformed into a 2 lines CSV file (formatted for the readme)
+will be transformed into a 5 lines CSV file (formatted for the readme)
 
 ```
 a       , b -> c  , b -> d  , e -> f   , e -> g   , j -> k  , j -> l
