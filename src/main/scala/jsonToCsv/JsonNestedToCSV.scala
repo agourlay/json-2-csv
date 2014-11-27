@@ -13,7 +13,6 @@ import jawn.AsyncParser
 import jawn.ParseException
 
 import java.io.File
-import java.util.concurrent.atomic.{ AtomicBoolean, AtomicLong }
 
 object Json2CsvStream {
 
@@ -32,44 +31,42 @@ object Json2CsvStream {
     }
 
     val resultFileName = FilenameUtils.removeExtension(file.getName) + "-json.csv"
-    val csvWriter = CSVWriter.open(resultFileName, append = true, encoding = "UTF-8")
-    val rowCount = streamConversion(file, csvWriter)
-    csvWriter.close()
+    val streamInput = scala.io.Source.fromFile(file, "UTF-8").getLines().toStream
+    val rowCount = streamConversion(streamInput, resultFileName)
 
     println(s"Success - transformation completed in file $resultFileName")
     println(s"          $rowCount CSV rows generated")
     resultFileName
   }
 
-  def streamConversion(file: File, csvWriter: CSVWriter): Long = {
-    // Some cool Atomic vars :)
-    var firstRow = new AtomicBoolean(true)
-    var rowCount = new AtomicLong(0)
-
-    val chunks = scala.io.Source.fromFile(file, "UTF-8").getLines().toStream
+  def streamConversion(chunks: Stream[String], resultFileName: String): Long = {
+    val csvWriter = CSVWriter.open(resultFileName, append = true, encoding = "UTF-8")
     val p = jawn.Parser.async[JValue](mode = AsyncParser.UnwrapArray)
 
-    def processJValue(j: JValue, keysWithNestingSeen: SortedSet[String]): SortedSet[String] = j match {
+    def processJValue(j: JValue, resultAcc: ResultAcc): ResultAcc = j match {
       case JObject(values) ⇒
         val listTuple = loopOverKeys(values.toMap, "")
         val listOfKeys = listTuple.map(_._1).sorted
         val keysWithNesting = listOfKeys.distinct.filter(_.contains(nestedColumnnSeparator))
-        val updatedKeysWithNestingSeen = keysWithNestingSeen ++ keysWithNesting.toSet
+        val updatedKeysWithNestingSeen = resultAcc.keysWithNestingSeen ++ keysWithNesting.toSet
 
         val keysWithoutNesting = listOfKeys.distinct.filterNot { k ⇒
+          // FIXME detecting the presence of a nestedColumnnSeparator String is not cool :(
           updatedKeysWithNestingSeen.contains(k) || updatedKeysWithNestingSeen.exists(_.startsWith(k + " " + nestedColumnnSeparator))
         }
 
+        // Write headers if necessary
         val headers = keysWithoutNesting.sorted ::: updatedKeysWithNestingSeen.toList
+        if (resultAcc.rowCount == 0) csvWriter.writeRow(headers)
+
+        // Write rows
         val reconciliatedValues = reconciliateValues(headers, listTuple)
+        val rowsNbWritten = writeRows(reconciliatedValues, keysWithoutNesting, updatedKeysWithNestingSeen.toList, csvWriter)
 
-        writeHeaders(headers, csvWriter)
-        writeRows(reconciliatedValues, keysWithoutNesting, updatedKeysWithNestingSeen.toList, csvWriter)
-
-        updatedKeysWithNestingSeen
+        ResultAcc(updatedKeysWithNestingSeen, rowsNbWritten)
       case _ ⇒
         println(s"other match? $j")
-        SortedSet.empty[String]
+        ResultAcc()
     }
 
     def reconciliateValues(headers: List[String], listTuple: List[(String, JValue)]) = {
@@ -137,14 +134,7 @@ object Json2CsvStream {
       }
     }
 
-    def writeHeaders(headers: List[String], csvWriter: CSVWriter) = {
-      if (firstRow.get) {
-        csvWriter.writeRow(headers)
-        firstRow.set(false)
-      }
-    }
-
-    def writeRows(values: List[(String, JValue)], keysWithoutNesting: List[String], keysWithNesting: List[String], csvWriter: CSVWriter) {
+    def writeRows(values: List[(String, JValue)], keysWithoutNesting: List[String], keysWithNesting: List[String], csvWriter: CSVWriter): Long = {
       val valuesWithoutNesting = values.sortBy(_._1).filter(v ⇒ keysWithoutNesting.contains(v._1)).map(_._2)
       val emptyFiller = keysWithoutNesting.map(v ⇒ JNull)
       val valuesWithNesting = values.sortBy(_._1).filter(v ⇒ keysWithNesting.contains(v._1))
@@ -165,31 +155,42 @@ object Json2CsvStream {
         if (i == 0) csvWriter.writeRow(valuesWithoutNesting ::: extra map (renderValue(_)))
         else csvWriter.writeRow(emptyFiller ::: extra map (renderValue(_)))
       }
-      rowCount.addAndGet(rowsNbToWrite)
+      rowsNbToWrite
     }
 
     //https://github.com/non/jawn/issues/13
     def renderValue(v: JValue) = v.render(jawn.ast.FastRenderer).trim.replace("null", "").replace("[]", "")
 
     @tailrec
-    def loop(st: Stream[String], p: jawn.AsyncParser[JValue], keysWithNestingSeen: SortedSet[String]): Unit = {
+    def loop(st: Stream[String], p: jawn.AsyncParser[JValue], resultAcc: ResultAcc): ResultAcc = {
       st match {
         case Stream.Empty ⇒
-          p.finish().fold(e ⇒ println(e), jsSeq ⇒ jsSeq.foreach(processJValue(_, keysWithNestingSeen)))
+          p.finish() match {
+            case Left(exception) ⇒
+              println(exception)
+              ResultAcc()
+            case Right(jsSeq) ⇒
+              jsSeq.foldLeft(resultAcc) { (a, b) ⇒ a + processJValue(b, resultAcc) }
+          }
         case s #:: tail ⇒
           p.absorb(s) match {
-            case Left(exception) ⇒ println(exception)
+            case Left(exception) ⇒
+              println(exception)
+              ResultAcc()
             case Right(jsSeq) ⇒
-              val newkeysWithNestingSeen = jsSeq.foldLeft(keysWithNestingSeen) { (a, b) ⇒
-                a ++ processJValue(b, keysWithNestingSeen)
-              }
-              loop(tail, p, newkeysWithNestingSeen)
+              val newAcc = jsSeq.foldLeft(resultAcc) { (a, b) ⇒ a + processJValue(b, resultAcc) }
+              loop(tail, p, newAcc)
           }
       }
     }
 
     // Business Time!
-    loop(chunks, p, SortedSet.empty[String])
-    rowCount.get
+    val result = loop(chunks, p, ResultAcc())
+    csvWriter.close()
+    result.rowCount
   }
+}
+
+case class ResultAcc(keysWithNestingSeen: SortedSet[String] = SortedSet.empty[String], rowCount: Long = 0L) {
+  def +(other: ResultAcc) = copy(keysWithNestingSeen ++ other.keysWithNestingSeen, rowCount + other.rowCount)
 }

@@ -14,7 +14,6 @@ Don't take this repo too seriously, it is still mostly a WIP.
 ## Limitations
 
 - the first element should be a complete definition of the structure, the following ones can be sparse.
-- requires Java 7
 
 ## Example
 
@@ -87,7 +86,7 @@ value a2, value c2, value d2,          ,          ,value k2, value l2
 
 ## Todos
 
-- clean code.
+- error handling
 - more unit-tests.
 - proper logging.
 - extract column separator to config file.
