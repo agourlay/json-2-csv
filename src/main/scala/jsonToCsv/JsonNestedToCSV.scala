@@ -170,7 +170,7 @@ object Json2CsvStream {
               println(exception)
               ResultAcc()
             case Right(jsSeq) ⇒
-              jsSeq.foldLeft(resultAcc) { (a, b) ⇒ a + processJValue(b, resultAcc) }
+              jsSeq.foldLeft(resultAcc) { (a, b) ⇒ a + processJValue(b, a) }
           }
         case s #:: tail ⇒
           p.absorb(s) match {
@@ -178,7 +178,7 @@ object Json2CsvStream {
               println(exception)
               ResultAcc()
             case Right(jsSeq) ⇒
-              val newAcc = jsSeq.foldLeft(resultAcc) { (a, b) ⇒ a + processJValue(b, resultAcc) }
+              val newAcc = jsSeq.foldLeft(resultAcc) { (a, b) ⇒ a + processJValue(b, a) }
               loop(tail, p, newAcc)
           }
       }
