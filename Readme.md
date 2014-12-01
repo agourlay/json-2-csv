@@ -17,72 +17,7 @@ Don't take this repo too seriously, it is still mostly a WIP.
 
 ## Example
 
-A json file containing a collection of one object like this
-
-```
-[ 
-  { 
-    "a": "value a1",
-    "b": 
-      {
-        "c": "value c1",
-        "d": "value d1"
-      }
-    ,
-    "e": [
-      {
-        "f": "value f11",
-        "g": "value g11"
-      },
-      {
-        "f": "value f12",
-        "g": "value g12"
-      }
-    ],
-    "i" : [
-      {
-        "j" : [ 
-          {
-            "k": "value k1",
-            "l": "value l1"
-          }
-        ]
-      }
-    ]
-  },
-    { 
-    "a": "value a2",
-    "b": 
-      {
-        "c": "value c2",
-        "d": "value d2"
-      }
-    ,
-    "e": [],
-    "i" : [
-      {
-        "j" : [ 
-          {
-            "k": "value k2",
-            "l": "value l2"
-          }
-        ]
-      }
-    ]
-  }
-]
-```
-
-will be transformed into a 5 lines CSV file (formatted for the readme)
-
-```
-a       , b -> c  , b -> d  , e -> f   , e -> g   , j -> k  , j -> l
-value a1, value c1, value d1, value f11, value g11, value k1, value l1
-        ,         ,         , value f12, value g12,         ,
-        ,         ,         , value f13, value g13,         ,
-value a2, value c2, value d2,          ,          ,value k2, value l2
-
-```
+A json file containing a collection of one object like [this](https://github.com/agourlay/json-2-csv-stream/blob/master/src/test/resources/test.json) will be transformed into a CSV file like [that](https://github.com/agourlay/json-2-csv-stream/blob/master/src/test/resources/test-json.csv).
 
 ## Todos
 

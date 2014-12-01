@@ -29,7 +29,7 @@ class ApplicationITSpec extends FlatSpec with Matchers {
 
   "The application" should "not blow up the heap while transforming huge stream" in {
     val resultFileName = "shouldBeDeleted.csv"
-    val inputStream = repeatTestFileContent(500000)
+    val inputStream = repeatTestFileContent(10000)
     Json2CsvStream.streamConversion(inputStream, resultFileName)
     FileUtils.forceDelete(new File(resultFileName))
   }

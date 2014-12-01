@@ -1,5 +1,5 @@
-a,b -> c,b -> d,e -> f,e -> g,j -> k,j -> l
-"""value a1""","""value c1""","""value d1""","""value f11""","""value g11""","""value k1""","""value l1"""
-,,,"""value f12""","""value g12""",,
-,,,"""value f13""","""value g13""",,
-"""value a2""","""value c2""","""value d2""",,,"""value k2""","""value l2"""
+a,m,b.c,b.d,e.f,e.g,j.k,j.l
+"""value a1""","""value m11, value m12""","""value c1""","""value d1""","""value f11""","""value g11""","""value k1""","""value l1"""
+,,,,"""value f12""","""value g12""",,
+,,,,"""value f13""","""value g13""",,
+"""value a2""","""value m21, value m22""","""value c2""","""value d2""",,,"""value k2""","""value l2"""

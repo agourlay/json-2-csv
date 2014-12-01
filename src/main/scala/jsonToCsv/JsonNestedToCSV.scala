@@ -16,7 +16,9 @@ import java.io.File
 
 object Json2CsvStream {
 
-  val nestedColumnnSeparator = "->"
+  // TODO remove this by using a list of keys
+  val internalNestedColumnnSeparator = "->"
+  val externalNestedColumnnSeparator = "."
 
   def main(args: Array[String]): Unit = {
     if (args.isEmpty) println("Error - Provide the file path as argument ")
@@ -47,17 +49,17 @@ object Json2CsvStream {
       case JObject(values) ⇒
         val listTuple = loopOverKeys(values.toMap, "")
         val listOfKeys = listTuple.map(_._1).sorted
-        val keysWithNesting = listOfKeys.distinct.filter(_.contains(nestedColumnnSeparator))
+        val keysWithNesting = listOfKeys.distinct.filter(_.contains(internalNestedColumnnSeparator))
         val updatedKeysWithNestingSeen = resultAcc.keysWithNestingSeen ++ keysWithNesting.toSet
 
         val keysWithoutNesting = listOfKeys.distinct.filterNot { k ⇒
-          // FIXME detecting the presence of a nestedColumnnSeparator String is not cool :(
-          updatedKeysWithNestingSeen.contains(k) || updatedKeysWithNestingSeen.exists(_.startsWith(k + " " + nestedColumnnSeparator))
+          // FIXME detecting the presence of a internalNestedColumnnSeparator String is not cool :(
+          updatedKeysWithNestingSeen.contains(k) || updatedKeysWithNestingSeen.exists(_.startsWith(k + internalNestedColumnnSeparator))
         }
 
         // Write headers if necessary
         val headers = keysWithoutNesting.sorted ::: updatedKeysWithNestingSeen.toList
-        if (resultAcc.rowCount == 0) csvWriter.writeRow(headers)
+        if (resultAcc.rowCount == 0) csvWriter.writeRow(headers.map(_.replace(internalNestedColumnnSeparator, externalNestedColumnnSeparator)))
 
         // Write rows
         val reconciliatedValues = reconciliateValues(headers, listTuple)
@@ -86,7 +88,7 @@ object Json2CsvStream {
     }
 
     def jvalueMatcher(value: JValue, key: String, parentKey: String): List[(String, JValue)] = {
-      val newKey = if (parentKey.isEmpty) key else s"$parentKey $nestedColumnnSeparator $key"
+      val newKey = if (parentKey.isEmpty) key else s"$parentKey$internalNestedColumnnSeparator$key"
       value match {
         case j @ JNull             ⇒ List((newKey, j))
         case j @ JString(jvalue)   ⇒ List((newKey, j))
@@ -98,12 +100,12 @@ object Json2CsvStream {
         case JObject(jvalue)       ⇒ loopOverKeys(jvalue.toMap, key)
         case JArray(jvalue) ⇒
           if (jvalue.isEmpty) List((key, JNull))
-          else if (isJArrayOfValues(jvalue)) List((key, mergeJValue(jvalue.toList)))
+          else if (isJArrayOfValues(jvalue)) List((key, mergeJValue(jvalue)))
           else loopOverValues(jvalue.toList, key, parentKey)
       }
     }
 
-    def mergeJValue(values: List[JValue]): JValue = {
+    def mergeJValue(values: Array[JValue]): JValue = {
       val r = values.map { v ⇒
         v match {
           case j @ JNull             ⇒ ""
@@ -120,7 +122,7 @@ object Json2CsvStream {
     }
 
     def isJArrayOfValues(vs: Array[JValue]): Boolean = {
-      vs.toList.forall {
+      vs.forall {
         _ match {
           case JNull             ⇒ true
           case JString(jvalue)   ⇒ true
