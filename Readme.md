@@ -21,9 +21,7 @@ A json file containing a collection of one object like [this](https://github.com
 
 ## Todos
 
-- error handling
+- error handling.
 - more unit-tests.
 - proper logging.
-- extract column separator to config file.
-- perfomance optim. (duplicate sorting, fusion mapping...)
 - publish either as a lib or as a runnable jar.

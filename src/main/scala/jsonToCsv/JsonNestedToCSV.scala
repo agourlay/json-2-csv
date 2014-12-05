@@ -16,10 +16,6 @@ import java.io.File
 
 object Json2CsvStream {
 
-  // TODO remove this by using a list of keys
-  val internalNestedColumnnSeparator = "->"
-  val externalNestedColumnnSeparator = "."
-
   def main(args: Array[String]): Unit = {
     if (args.isEmpty) println("Error - Provide the file path as argument ")
     else process(args(0))
@@ -47,65 +43,61 @@ object Json2CsvStream {
 
     def processJValue(j: JValue, resultAcc: ResultAcc): ResultAcc = j match {
       case JObject(values) ⇒
-        val listTuple = loopOverKeys(values.toMap, "")
-        val listOfKeys = listTuple.map(_._1).sorted
-        val keysWithNesting = listOfKeys.distinct.filter(_.contains(internalNestedColumnnSeparator))
-        val updatedKeysWithNestingSeen = resultAcc.keysWithNestingSeen ++ keysWithNesting
-
-        val keysWithoutNesting = listOfKeys.distinct.filterNot { k ⇒
-          // FIXME detecting the presence of a internalNestedColumnnSeparator String is not cool :(
-          updatedKeysWithNestingSeen.contains(k) || updatedKeysWithNestingSeen.exists(_.startsWith(k + internalNestedColumnnSeparator))
+        val cells = loopOverKeys(values.toMap)
+        val keys = cells.map(_.key)
+        // First element should contain complete schema
+        val newKeys = {
+          if (resultAcc.keysSeen.isEmpty) resultAcc.keysSeen ++ keys
+          else resultAcc.keysSeen
         }
 
         // Write headers if necessary
-        val headers = keysWithoutNesting.sorted ++: updatedKeysWithNestingSeen.toVector
-        if (resultAcc.rowCount == 0) writeHeaders(headers)
+        if (resultAcc.rowCount == 0) writeHeaders(newKeys.toVector)
 
         // Write rows
-        val reconciliatedValues = reconciliateValues(headers, listTuple)
-        val rowsNbWritten = writeRows(reconciliatedValues, keysWithoutNesting, updatedKeysWithNestingSeen.toVector, csvWriter)
+        val reconciliatedValues = reconciliateValues(newKeys, cells)
+        val rowsNbWritten = writeRows(reconciliatedValues, newKeys, csvWriter)
 
-        ResultAcc(updatedKeysWithNestingSeen, rowsNbWritten)
+        ResultAcc(newKeys, rowsNbWritten)
       case _ ⇒
         println(s"other match? $j")
         ResultAcc()
     }
 
-    def writeHeaders(headers: Vector[String]) {
-      csvWriter.writeRow(headers.map(_.replace(internalNestedColumnnSeparator, externalNestedColumnnSeparator)))
+    def writeHeaders(headers: Vector[Key]) {
+      csvWriter.writeRow(headers.map(_.physicalHeader))
     }
 
-    def reconciliateValues(headers: Vector[String], listTuple: Vector[(String, JValue)]) = {
-      val fakeValues = headers.filterNot(h ⇒ listTuple.exists(_._1 == h)).map(h ⇒ (h, JNull))
-      val correctValues = listTuple.filter(c ⇒ headers.contains(c._1))
-      correctValues.sortBy(_._1) ++: fakeValues.sortBy(_._1)
+    def reconciliateValues(keys: SortedSet[Key], cells: Vector[Cell]): Vector[Cell] = {
+      val fakeValues = keys.filterNot(k ⇒ cells.exists(_.key == k)).map(k ⇒ Cell(k, JNull))
+      val correctValues = cells.filter(c ⇒ keys.contains(c.key))
+      correctValues.toVector ++: fakeValues.toVector
     }
 
-    def loopOverKeys(values: Map[String, JValue], parentKey: String): Vector[(String, JValue)] = {
+    def loopOverKeys(values: Map[String, JValue], key: Key = Key.emptyKey): Vector[Cell] = {
       values.map {
-        case (k, v) ⇒ jvalueMatcher(v, k, parentKey)
+        case (k, v) ⇒ jvalueMatcher(v, key.addSegment(k))
       }.toVector.flatten
     }
 
-    def loopOverValues(values: Array[JValue], key: String, parentKey: String): Vector[(String, JValue)] = {
-      values.flatMap(jvalueMatcher(_, key, parentKey)).toVector
+    def loopOverValues(values: Array[JValue], key: Key): Vector[Cell] = {
+      values.flatMap(jvalueMatcher(_, key)).toVector
     }
 
-    def jvalueMatcher(value: JValue, key: String, parentKey: String): Vector[(String, JValue)] = {
-      val newKey = if (parentKey.isEmpty) key else s"$parentKey$internalNestedColumnnSeparator$key"
+    def jvalueMatcher(value: JValue, key: Key): Vector[Cell] = {
       value match {
-        case j @ JNull             ⇒ Vector((newKey, j))
-        case j @ JString(jvalue)   ⇒ Vector((newKey, j))
-        case j @ LongNum(jvalue)   ⇒ Vector((newKey, j))
-        case j @ DoubleNum(jvalue) ⇒ Vector((newKey, j))
-        case j @ DeferNum(jvalue)  ⇒ Vector((newKey, j))
-        case j @ JTrue             ⇒ Vector((newKey, j))
-        case j @ JFalse            ⇒ Vector((newKey, j))
+        case j @ JNull             ⇒ Vector(Cell(key, j))
+        case j @ JString(jvalue)   ⇒ Vector(Cell(key, j))
+        case j @ LongNum(jvalue)   ⇒ Vector(Cell(key, j))
+        case j @ DoubleNum(jvalue) ⇒ Vector(Cell(key, j))
+        case j @ DeferNum(jvalue)  ⇒ Vector(Cell(key, j))
+        case j @ JTrue             ⇒ Vector(Cell(key, j))
+        case j @ JFalse            ⇒ Vector(Cell(key, j))
         case JObject(jvalue)       ⇒ loopOverKeys(jvalue.toMap, key)
         case JArray(jvalue) ⇒
-          if (jvalue.isEmpty) Vector((key, JNull))
-          else if (isJArrayOfValues(jvalue)) Vector((key, mergeJValue(jvalue)))
-          else loopOverValues(jvalue, key, parentKey)
+          if (jvalue.isEmpty) Vector(Cell(key, JNull))
+          else if (isJArrayOfValues(jvalue)) Vector(Cell(key, mergeJValue(jvalue)))
+          else loopOverValues(jvalue, key)
       }
     }
 
@@ -140,11 +132,13 @@ object Json2CsvStream {
       }
     }
 
-    def writeRows(values: Vector[(String, JValue)], keysWithoutNesting: Vector[String], keysWithNesting: Vector[String], csvWriter: CSVWriter): Long = {
-      val valuesWithoutNesting = values.sortBy(_._1).filter(v ⇒ keysWithoutNesting.contains(v._1)).map(_._2)
+    def writeRows(values: Vector[Cell], keys: SortedSet[Key], csvWriter: CSVWriter): Long = {
+      val keysWithNesting = keys.filter(_.isNested)
+      val keysWithoutNesting = keys.filter(!_.isNested)
+      val valuesWithoutNesting = values.sortBy(_.physicalKey).filter(v ⇒ keysWithoutNesting.contains(v.key)).map(_.value)
       val emptyFiller = keysWithoutNesting.map(v ⇒ JNull)
-      val valuesWithNesting = values.sortBy(_._1).filter(v ⇒ keysWithNesting.contains(v._1))
-      val groupedValues = valuesWithNesting.groupBy(_._1)
+      val valuesWithNesting = values.sortBy(_.physicalKey).filter(v ⇒ keysWithNesting.contains(v.key))
+      val groupedValues = valuesWithNesting.groupBy(_.physicalKey)
 
       val rowsNbToWrite: Int = {
         if (!keysWithNesting.isEmpty) {
@@ -155,7 +149,7 @@ object Json2CsvStream {
       for (i ← List.range(0, rowsNbToWrite)) {
         val extra = if (groupedValues.values.isEmpty) Vector()
         else groupedValues.toList.sortBy(_._1).map {
-          case (k, values) ⇒ if (values.indices.contains(i)) values(i)._2 else JNull
+          case (k, values) ⇒ if (values.indices.contains(i)) values(i).value else JNull
         }
 
         if (i == 0) csvWriter.writeRow(valuesWithoutNesting ++: extra map (renderValue(_)))
@@ -168,7 +162,7 @@ object Json2CsvStream {
     def renderValue(v: JValue) = v.render(jawn.ast.FastRenderer).trim.replace("null", "").replace("[]", "")
 
     @tailrec
-    def loop(st: Stream[String], p: jawn.AsyncParser[JValue], resultAcc: ResultAcc): ResultAcc = {
+    def loop(st: Stream[String], p: jawn.AsyncParser[JValue], resultAcc: ResultAcc = ResultAcc()): ResultAcc = {
       st match {
         case Stream.Empty ⇒
           p.finish() match {
@@ -191,12 +185,30 @@ object Json2CsvStream {
     }
 
     // Business Time!
-    val result = loop(chunks, p, ResultAcc())
+    val result = loop(chunks, p)
     csvWriter.close()
     result.rowCount
   }
 }
 
-case class ResultAcc(keysWithNestingSeen: SortedSet[String] = SortedSet.empty[String], rowCount: Long = 0L) {
-  def +(other: ResultAcc) = copy(keysWithNestingSeen ++ other.keysWithNestingSeen, rowCount + other.rowCount)
+case class ResultAcc(keysSeen: SortedSet[Key] = SortedSet.empty[Key], rowCount: Long = 0L) {
+  def +(other: ResultAcc) = copy(keysSeen ++ other.keysSeen, rowCount + other.rowCount)
+}
+
+case class Key(segments: Vector[String]) {
+  val isNested = segments.size > 0
+  val physicalHeader = segments.mkString(Key.nestedColumnnSeparator)
+  def +(other: Key) = copy(segments ++: other.segments)
+  def addSegment(other: String) = copy(segments :+ other)
+}
+
+object Key {
+  val nestedColumnnSeparator = "."
+  def emptyKey = Key(Vector())
+  def fromPhysicalKey(pKey: String) = Key(pKey.split(nestedColumnnSeparator).toVector)
+  implicit val orderingByPhysicalHeader: Ordering[Key] = Ordering.by(k ⇒ k.physicalHeader)
+}
+
+case class Cell(key: Key, value: JValue) {
+  val physicalKey = key.physicalHeader
 }
