@@ -3,8 +3,6 @@ package json2CsvStream
 import scala.annotation.tailrec
 import scala.collection.SortedSet
 
-import org.apache.commons.io.FilenameUtils
-
 import org.slf4j.LoggerFactory
 
 import com.github.tototoshi.csv.CSVWriter
@@ -14,26 +12,24 @@ import jawn.ast.JParser._
 import jawn.AsyncParser
 import jawn.ParseException
 
-import java.io.File
+import java.io._
 
 object Converter {
 
   def log = LoggerFactory.getLogger(this.getClass)
 
-  def fileConversion(file: File): File = {
+  def fileConversion(file: File, resultOutputStream: OutputStream): Unit = {
     if (!file.isFile()) {
       log.error("The file " + file.getCanonicalPath() + " does not exists")
       System.exit(0)
     }
 
-    val resultFileName = FilenameUtils.removeExtension(file.getName) + "-json.csv"
     val streamInput = scala.io.Source.fromFile(file, "UTF-8").getLines().toStream
-    val rowCount = streamConversion(streamInput, resultFileName)
-    new File(resultFileName)
+    val rowCount = streamConversion(streamInput, resultOutputStream)
   }
 
-  def streamConversion(chunks: Stream[String], resultFileName: String): Long = {
-    val csvWriter = CSVWriter.open(resultFileName, append = true, encoding = "UTF-8")
+  def streamConversion(chunks: Stream[String], resultOutputStream: OutputStream): Long = {
+    val csvWriter = CSVWriter.open(resultOutputStream)
     val p = jawn.Parser.async[JValue](mode = AsyncParser.UnwrapArray)
 
     def processJValue(j: JValue, progress: Progress): Progress = j match {
@@ -180,8 +176,7 @@ object Converter {
     // Business Time!
     val finalRowCount = loop(chunks, p).rowCount
     csvWriter.close()
-    log.info(s"Success - transformation completed in file $resultFileName")
-    log.info(s"          $finalRowCount CSV rows generated")
+    log.info(s"Conversion completed : $finalRowCount CSV rows generated")
     finalRowCount
   }
 }

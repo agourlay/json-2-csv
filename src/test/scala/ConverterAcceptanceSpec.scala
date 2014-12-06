@@ -1,23 +1,25 @@
 package test
 
 import org.scalatest._
-import java.io.File
+import java.io._
 import org.apache.commons.io.FileUtils
 
 import json2CsvStream._
 
-class ConverterSpec extends WordSpec with Matchers {
+class ConverterAcceptanceSpec extends WordSpec with Matchers {
 
   "The converter" must {
     "transform properly the nominal case" in {
       val inputFile = new File(getClass.getResource("/test.json").getPath())
-      val resultFile = Converter.fileConversion(inputFile)
-      val resultFileContent = FileUtils.readFileToString(resultFile)
+      val outputName = "delete.json"
+      val resultOutputStream = new FileOutputStream(outputName)
+      Converter.fileConversion(inputFile, resultOutputStream)
+
+      val resultFile = new File(outputName)
       FileUtils.forceDelete(resultFile)
 
       val referenceResultFile = new File(getClass.getResource("/test-json.csv").getPath())
-      val referenceResult = FileUtils.readFileToString(referenceResultFile)
-      resultFileContent shouldEqual referenceResult
+      FileUtils.readFileToString(resultFile) shouldEqual FileUtils.readFileToString(referenceResultFile)
     }
   }
 }

@@ -3,23 +3,24 @@ package test
 import org.scalatest._
 import java.io.File
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.output.NullOutputStream
 
 import json2CsvStream._
 
 class ConverterPerfSpec extends WordSpec with Matchers {
 
   // test heap size options in build.sbt
-  "The converter within 2Go heap" must {
+  "The converter within 2 Gb heap" must {
 
-    "convert stream of 30.000 elements" in {
+    "convert stream of 10.000 elements" in {
       stressMemoryTestBuilder(10000)
     }
 
-    "convert stream of 300.000 elements" in {
+    "convert stream of 100.000 elements" in {
       stressMemoryTestBuilder(100000)
     }
 
-    "convert stream of 3.000.000 elements" in {
+    "convert stream of 1.000.000 elements" in {
       stressMemoryTestBuilder(1000000)
     }
   }
@@ -27,10 +28,9 @@ class ConverterPerfSpec extends WordSpec with Matchers {
   // Helper to stressTest memory. 
   // Not blowing up here means success.
   def stressMemoryTestBuilder(n: Int) {
-    val resultFileName = "shouldBeDeleted.csv"
-    val inputStream = repeatTestFileContent(n)
-    Converter.streamConversion(inputStream, resultFileName)
-    FileUtils.forceDelete(new File(resultFileName))
+    // test.json containing 3 objects.
+    val inputStream = repeatTestFileContent(n / 3)
+    Converter.streamConversion(inputStream, new NullOutputStream())
     assert(true)
   }
 
