@@ -2,7 +2,7 @@ json-2-csv-stream [![Build Status](https://travis-ci.org/agourlay/json-2-csv-str
 =========
 
 
-- transforms a file containing a collection of JSON into a CSV file.
+- transforms a file containing a JSON collection into a CSV file.
 - nested objects are turned into extra columns.
 - works in a streaming fashion allowing the processing of very large files.
 - the JSON objects at the collection level must share a common structure. 
@@ -23,5 +23,4 @@ A json file containing a collection of one object like [this](https://github.com
 
 - error handling.
 - more unit-tests.
-- proper logging.
 - publish either as a lib or as a runnable jar.

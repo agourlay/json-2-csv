@@ -36,10 +36,12 @@ libraryDependencies ++= {
   val scalaTestV = "2.2.2"
   val jawnV      = "0.7.1"
   val scalaCsvV  = "1.1.2"
+  val logbackV   = "1.1.2"
   Seq(
-     "commons-io"           % "commons-io" % commonsIoV
-    ,"org.spire-math"       %% "jawn-ast"  % jawnV
-    ,"com.github.tototoshi" %% "scala-csv" % scalaCsvV
-    ,"org.scalatest"        %% "scalatest" % scalaTestV % "test"
+     "commons-io"           % "commons-io"       % commonsIoV
+    ,"org.spire-math"       %% "jawn-ast"        % jawnV
+    ,"com.github.tototoshi" %% "scala-csv"       % scalaCsvV
+    ,"ch.qos.logback"       %  "logback-classic" % logbackV
+    ,"org.scalatest"        %% "scalatest"       % scalaTestV % "test"
   )
 }
