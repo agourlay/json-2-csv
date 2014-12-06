@@ -16,10 +16,11 @@ class ConverterAcceptanceSpec extends WordSpec with Matchers {
       Converter.fileConversion(inputFile, resultOutputStream)
 
       val resultFile = new File(outputName)
+      val resultFileContent = FileUtils.readFileToString(resultFile)
       FileUtils.forceDelete(resultFile)
 
       val referenceResultFile = new File(getClass.getResource("/test-json.csv").getPath())
-      FileUtils.readFileToString(resultFile) shouldEqual FileUtils.readFileToString(referenceResultFile)
+      resultFileContent shouldEqual FileUtils.readFileToString(referenceResultFile)
     }
   }
 }

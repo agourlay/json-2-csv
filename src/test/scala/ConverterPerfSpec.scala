@@ -23,6 +23,10 @@ class ConverterPerfSpec extends WordSpec with Matchers {
     "convert stream of 1.000.000 elements" in {
       stressMemoryTestBuilder(1000000)
     }
+
+    "convert stream of 10.000.000 elements" in {
+      stressMemoryTestBuilder(10000000)
+    }
   }
 
   // Helper to stressTest memory. 

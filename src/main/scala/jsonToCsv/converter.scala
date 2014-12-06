@@ -12,20 +12,19 @@ import jawn.ast.JParser._
 import jawn.AsyncParser
 import jawn.ParseException
 
-import java.io._
+import java.io.{ File, OutputStream }
 
 object Converter {
 
   def log = LoggerFactory.getLogger(this.getClass)
 
-  def fileConversion(file: File, resultOutputStream: OutputStream): Unit = {
+  def fileConversion(file: File, resultOutputStream: OutputStream): Long = {
     if (!file.isFile()) {
       log.error("The file " + file.getCanonicalPath() + " does not exists")
       System.exit(0)
     }
-
     val streamInput = scala.io.Source.fromFile(file, "UTF-8").getLines().toStream
-    val rowCount = streamConversion(streamInput, resultOutputStream)
+    streamConversion(streamInput, resultOutputStream)
   }
 
   def streamConversion(chunks: Stream[String], resultOutputStream: OutputStream): Long = {
