@@ -146,6 +146,7 @@ object Converter {
         } else {
           val emptyFiller = keysWithoutNesting.map(v ⇒ JNull)
           csvWriter.writeRow(emptyFiller ++: extra map (renderValue(_)))
+          csvWriter.flush()
         }
       }
       rowsNbToWrite

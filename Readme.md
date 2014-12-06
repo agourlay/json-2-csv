@@ -22,5 +22,4 @@ A json file containing a collection of one object like [this](https://github.com
 ## Todos
 
 - error handling.
-- more unit-tests.
 - publish either as a lib or as a runnable jar.
