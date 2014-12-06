@@ -118,29 +118,29 @@ object Converter {
       }
 
     def writeRows(values: Vector[Cell], keys: SortedSet[Key], csvWriter: CSVWriter): Long = {
-      val keysWithNesting = keys.filter(_.isNested)
-      val keysWithoutNesting = keys.filter(!_.isNested)
+      val keyPartition = keys.partition(_.isNested)
+      val keysWithNesting = keyPartition._1
+      val keysWithoutNesting = keyPartition._2
       val valuesWithNesting = values.filter(v ⇒ keysWithNesting.contains(v.key))
       val groupedValues = valuesWithNesting.groupBy(_.physicalKey)
 
       val rowsNbToWrite = {
-        if (!keysWithNesting.isEmpty) {
-          groupedValues.values.maxBy(_.length).size
-        } else 1
+        if (keysWithNesting.isEmpty) 1
+        else groupedValues.values.maxBy(_.length).size
       }
 
       for (i ← 0 until rowsNbToWrite) {
         val extra = if (groupedValues.values.isEmpty) Vector()
-        else groupedValues.toList.sortBy(_._1).map {
-          case (k, values) ⇒ if (values.indices.contains(i)) values(i).value else JNull
+        else groupedValues.toVector.sortBy(_._1).map {
+          case (k, values) ⇒ values.lift(i).map(_.value).getOrElse(JNull)
         }
 
         if (i == 0) {
           val valuesWithoutNesting = values.filter(v ⇒ keysWithoutNesting.contains(v.key)).map(_.value)
-          csvWriter.writeRow(valuesWithoutNesting ++: extra map (renderValue(_)))
+          csvWriter.writeRow(valuesWithoutNesting ++: extra map renderValue)
         } else {
           val emptyFiller = keysWithoutNesting.map(v ⇒ JNull)
-          csvWriter.writeRow(emptyFiller ++: extra map (renderValue(_)))
+          csvWriter.writeRow(emptyFiller ++: extra map renderValue)
           csvWriter.flush()
         }
       }
