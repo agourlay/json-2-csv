@@ -10,31 +10,23 @@ import json2CsvStream._
 class ConverterPerfSpec extends WordSpec with Matchers {
 
   // test heap size options in build.sbt
-  "The converter within 2 Gb heap" must {
+  "The converter within 1 Gb heap" must {
 
-    "convert stream of 10.000 elements" in {
-      stressMemoryTestBuilder(10000)
-    }
-
-    "convert stream of 100.000 elements" in {
+    "convert a stream of 100.000 JSON elements" in {
       stressMemoryTestBuilder(100000)
     }
 
-    "convert stream of 1.000.000 elements" in {
+    "convert a stream of 1.000.000 JSON elements" in {
       stressMemoryTestBuilder(1000000)
-    }
-
-    "convert stream of 10.000.000 elements" in {
-      stressMemoryTestBuilder(10000000)
     }
   }
 
   // Helper to stressTest memory. 
-  // Not blowing up here means success.
   def stressMemoryTestBuilder(n: Int) {
     // test.json containing 3 objects.
     val inputStream = repeatTestFileContent(n / 3)
     Converter.streamConversion(inputStream, new NullOutputStream())
+    // Not blowing up here means success.
     assert(true)
   }
 
