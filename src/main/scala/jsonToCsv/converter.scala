@@ -73,14 +73,14 @@ object Converter {
 
     def jvalueMatcher(value: JValue, key: Key): Vector[Cell] =
       value match {
-        case j @ JNull             ⇒ Vector(Cell(key, j))
-        case j @ JString(jvalue)   ⇒ Vector(Cell(key, j))
-        case j @ LongNum(jvalue)   ⇒ Vector(Cell(key, j))
-        case j @ DoubleNum(jvalue) ⇒ Vector(Cell(key, j))
-        case j @ DeferNum(jvalue)  ⇒ Vector(Cell(key, j))
-        case j @ JTrue             ⇒ Vector(Cell(key, j))
-        case j @ JFalse            ⇒ Vector(Cell(key, j))
-        case JObject(jvalue)       ⇒ loopOverKeys(jvalue.toMap, key)
+        case j @ JNull        ⇒ Vector(Cell(key, j))
+        case j @ JString(_)   ⇒ Vector(Cell(key, j))
+        case j @ LongNum(_)   ⇒ Vector(Cell(key, j))
+        case j @ DoubleNum(_) ⇒ Vector(Cell(key, j))
+        case j @ DeferNum(_)  ⇒ Vector(Cell(key, j))
+        case j @ JTrue        ⇒ Vector(Cell(key, j))
+        case j @ JFalse       ⇒ Vector(Cell(key, j))
+        case JObject(jvalue)  ⇒ loopOverKeys(jvalue.toMap, key)
         case JArray(jvalue) ⇒
           if (jvalue.isEmpty) Vector(Cell(key, JNull))
           else if (isJArrayOfValues(jvalue)) Vector(Cell(key, mergeJValue(jvalue)))
@@ -90,14 +90,13 @@ object Converter {
     def mergeJValue(values: Array[JValue]): JValue = {
       val r = values.map { v ⇒
         v match {
-          case j @ JNull             ⇒ ""
-          case j @ JString(jvalue)   ⇒ jvalue
-          case j @ LongNum(jvalue)   ⇒ jvalue.toString
-          case j @ DoubleNum(jvalue) ⇒ jvalue.toString
-          case j @ DeferNum(jvalue)  ⇒ jvalue.toString
-          case j @ JTrue             ⇒ "true"
-          case j @ JFalse            ⇒ "false"
-          case _                     ⇒ "" // can"t merge other stuff
+          case JString(jvalue)   ⇒ jvalue
+          case LongNum(jvalue)   ⇒ jvalue.toString
+          case DoubleNum(jvalue) ⇒ jvalue.toString
+          case DeferNum(jvalue)  ⇒ jvalue.toString
+          case JTrue             ⇒ "true"
+          case JFalse            ⇒ "false"
+          case _                 ⇒ ""
         }
       }.mkString(", ")
       JString(r)
@@ -106,14 +105,8 @@ object Converter {
     def isJArrayOfValues(vs: Array[JValue]): Boolean =
       vs.forall {
         _ match {
-          case JNull             ⇒ true
-          case JString(jvalue)   ⇒ true
-          case LongNum(jvalue)   ⇒ true
-          case DoubleNum(jvalue) ⇒ true
-          case DeferNum(jvalue)  ⇒ true
-          case JTrue             ⇒ true
-          case JFalse            ⇒ true
-          case _                 ⇒ false
+          case JNull | JString(_) | LongNum(_) | DoubleNum(_) | DeferNum(_) | JTrue | JFalse ⇒ true
+          case _                                                                             ⇒ false
         }
       }
 
@@ -185,6 +178,7 @@ case class Progress(keysSeen: SortedSet[Key] = SortedSet.empty[Key], rowCount: L
 }
 
 case class Key(segments: Vector[String]) {
+  //FIXME It should be > 1, wrong logic
   val isNested = segments.size > 0
   val physicalHeader = segments.mkString(Key.nestedColumnnSeparator)
   def +(other: Key) = copy(segments ++: other.segments)
@@ -193,7 +187,7 @@ case class Key(segments: Vector[String]) {
 
 object Key {
   val nestedColumnnSeparator = "."
-  def emptyKey = Key(Vector())
+  val emptyKey = Key(Vector())
   def fromPhysicalKey(pKey: String) = Key(pKey.split(nestedColumnnSeparator).toVector)
   implicit val orderingByPhysicalHeader: Ordering[Key] = Ordering.by(k ⇒ k.physicalHeader)
 }

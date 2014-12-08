@@ -11,7 +11,7 @@ class ConverterAcceptanceSpec extends WordSpec with Matchers {
   "The converter" must {
     "transform properly the nominal case" in {
       val inputFile = new File(getClass.getResource("/test.json").getPath())
-      val outputName = "delete.json"
+      val outputName = "delete.csv"
       val resultOutputStream = new FileOutputStream(outputName)
       Converter.fileConversion(inputFile, resultOutputStream)
 
