@@ -111,29 +111,19 @@ object Converter {
       }
 
     def writeRows(values: Vector[Cell], keys: SortedSet[Key], csvWriter: CSVWriter): Long = {
-      val keyPartition = keys.partition(_.isNested)
-      val keysWithNesting = keyPartition._1
-      val keysWithoutNesting = keyPartition._2
-      val valuesWithNesting = values.filter(v ⇒ keysWithNesting.contains(v.key))
-      val groupedValues = valuesWithNesting.groupBy(_.physicalKey)
-
-      val rowsNbToWrite = {
-        if (keysWithNesting.isEmpty) 1
-        else groupedValues.values.maxBy(_.length).size
-      }
+      val groupedValues = values.groupBy(_.physicalKey)
+      val rowsNbToWrite = groupedValues.values.maxBy(_.length).size
 
       for (i ← 0 until rowsNbToWrite) {
-        val extra = if (groupedValues.values.isEmpty) Vector()
+        val row = if (groupedValues.values.isEmpty) Vector()
         else groupedValues.toVector.sortBy(_._1).map {
           case (k, values) ⇒ values.lift(i).map(_.value).getOrElse(JNull)
         }
 
         if (i == 0) {
-          val valuesWithoutNesting = values.filter(v ⇒ keysWithoutNesting.contains(v.key)).map(_.value)
-          csvWriter.writeRow(valuesWithoutNesting ++: extra map renderValue)
+          csvWriter.writeRow(row map renderValue)
         } else {
-          val emptyFiller = keysWithoutNesting.map(v ⇒ JNull)
-          csvWriter.writeRow(emptyFiller ++: extra map renderValue)
+          csvWriter.writeRow(row map renderValue)
           csvWriter.flush()
         }
       }
@@ -178,8 +168,6 @@ case class Progress(keysSeen: SortedSet[Key] = SortedSet.empty[Key], rowCount: L
 }
 
 case class Key(segments: Vector[String]) {
-  //FIXME It should be > 1, wrong logic
-  val isNested = segments.size > 0
   val physicalHeader = segments.mkString(Key.nestedColumnnSeparator)
   def +(other: Key) = copy(segments ++: other.segments)
   def addSegment(other: String) = copy(segments :+ other)
