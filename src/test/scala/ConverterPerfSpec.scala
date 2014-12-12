@@ -12,12 +12,8 @@ class ConverterPerfSpec extends WordSpec with Matchers {
   // test heap size options in build.sbt
   "The converter within 1 Gb heap" must {
 
-    "convert a stream of 100.000 JSON elements" in {
-      stressMemoryTestBuilder(100000)
-    }
-
-    "convert a stream of 1.000.000 JSON elements" in {
-      stressMemoryTestBuilder(1000000)
+    "convert a stream of 1.500.000 JSON elements" in {
+      stressMemoryTestBuilder(1500000)
     }
   }
 

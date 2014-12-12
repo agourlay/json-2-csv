@@ -45,7 +45,7 @@ object Converter {
 
         // Write rows
         val reconciliatedValues = reconciliateValues(newKeys, cells)
-        val rowsNbWritten = writeRows(reconciliatedValues, newKeys, csvWriter)
+        val rowsNbWritten = writeRows(reconciliatedValues, csvWriter)
 
         Progress(newKeys, rowsNbWritten)
       case _ ⇒
@@ -57,33 +57,33 @@ object Converter {
       csvWriter.writeRow(headers.map(_.physicalHeader).toSeq)
     }
 
-    def reconciliateValues(keys: SortedSet[Key], cells: Vector[Cell]): Vector[Cell] = {
+    def reconciliateValues(keys: SortedSet[Key], cells: Array[Cell]): Array[Cell] = {
       val fakeValues = keys.filterNot(k ⇒ cells.exists(_.key == k)).map(k ⇒ Cell(k, JNull))
       val correctValues = cells.filter(c ⇒ keys.contains(c.key))
-      correctValues.toVector ++: fakeValues.toVector
+      correctValues ++: fakeValues.toArray
     }
 
-    def loopOverKeys(values: Map[String, JValue], key: Key = Key.emptyKey): Vector[Cell] =
+    def loopOverKeys(values: Map[String, JValue], key: Key = Key.emptyKey): Array[Cell] =
       values.map {
         case (k, v) ⇒ jvalueMatcher(v, key.addSegment(k))
-      }.toVector.flatten
+      }.toArray.flatten
 
-    def loopOverValues(values: Array[JValue], key: Key): Vector[Cell] =
-      values.flatMap(jvalueMatcher(_, key)).toVector
+    def loopOverValues(values: Array[JValue], key: Key): Array[Cell] =
+      values.flatMap(jvalueMatcher(_, key))
 
-    def jvalueMatcher(value: JValue, key: Key): Vector[Cell] =
+    def jvalueMatcher(value: JValue, key: Key): Array[Cell] =
       value match {
-        case j @ JNull        ⇒ Vector(Cell(key, j))
-        case j @ JString(_)   ⇒ Vector(Cell(key, j))
-        case j @ LongNum(_)   ⇒ Vector(Cell(key, j))
-        case j @ DoubleNum(_) ⇒ Vector(Cell(key, j))
-        case j @ DeferNum(_)  ⇒ Vector(Cell(key, j))
-        case j @ JTrue        ⇒ Vector(Cell(key, j))
-        case j @ JFalse       ⇒ Vector(Cell(key, j))
+        case j @ JNull        ⇒ Array(Cell(key, j))
+        case j @ JString(_)   ⇒ Array(Cell(key, j))
+        case j @ LongNum(_)   ⇒ Array(Cell(key, j))
+        case j @ DoubleNum(_) ⇒ Array(Cell(key, j))
+        case j @ DeferNum(_)  ⇒ Array(Cell(key, j))
+        case j @ JTrue        ⇒ Array(Cell(key, j))
+        case j @ JFalse       ⇒ Array(Cell(key, j))
         case JObject(jvalue)  ⇒ loopOverKeys(jvalue.toMap, key)
         case JArray(jvalue) ⇒
-          if (jvalue.isEmpty) Vector(Cell(key, JNull))
-          else if (isJArrayOfValues(jvalue)) Vector(Cell(key, mergeJValue(jvalue)))
+          if (jvalue.isEmpty) Array(Cell(key, JNull))
+          else if (isJArrayOfValues(jvalue)) Array(Cell(key, mergeJValue(jvalue)))
           else loopOverValues(jvalue, key)
       }
 
@@ -110,17 +110,17 @@ object Converter {
         }
       }
 
-    def writeRows(values: Vector[Cell], keys: SortedSet[Key], csvWriter: CSVWriter): Long = {
+    def writeRows(values: Array[Cell], csvWriter: CSVWriter): Long = {
       val groupedValues = values.groupBy(_.physicalKey)
       val rowsNbToWrite = groupedValues.values.maxBy(_.length).size
 
       for (i ← 0 until rowsNbToWrite) {
-        val row = if (groupedValues.values.isEmpty) Vector()
-        else groupedValues.toVector.sortBy(_._1).map {
+        val row = if (groupedValues.values.isEmpty) Array()
+        else groupedValues.toArray.sortBy(_._1).map {
           case (k, values) ⇒ values.lift(i).map(_.value).getOrElse(JNull)
         }
 
-        csvWriter.writeRow(row map renderValue)
+        csvWriter.writeRow(row.map(renderValue(_)))
         csvWriter.flush()
       }
       rowsNbToWrite
