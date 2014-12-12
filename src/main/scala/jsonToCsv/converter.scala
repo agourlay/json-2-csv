@@ -120,12 +120,8 @@ object Converter {
           case (k, values) ⇒ values.lift(i).map(_.value).getOrElse(JNull)
         }
 
-        if (i == 0) {
-          csvWriter.writeRow(row map renderValue)
-        } else {
-          csvWriter.writeRow(row map renderValue)
-          csvWriter.flush()
-        }
+        csvWriter.writeRow(row map renderValue)
+        csvWriter.flush()
       }
       rowsNbToWrite
     }
