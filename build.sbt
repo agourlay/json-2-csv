@@ -21,7 +21,7 @@ scalacOptions := Seq(
 
 fork in Test := true
 
-javaOptions in Test ++= Seq("-Xmx1G", "-XX:-UseGCOverheadLimit")
+javaOptions in Test ++= Seq("-Xmx1G")
 
 scalariformSettings
 

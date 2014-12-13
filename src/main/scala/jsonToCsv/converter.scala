@@ -16,18 +16,18 @@ import java.io.{ File, OutputStream }
 
 object Converter {
 
-  def log = LoggerFactory.getLogger(this.getClass)
+  val log = LoggerFactory.getLogger(this.getClass)
 
   def fileConversion(file: File, resultOutputStream: OutputStream): Long = {
     if (!file.isFile()) {
       log.error("The file " + file.getCanonicalPath() + " does not exists")
       System.exit(0)
     }
-    val streamInput = scala.io.Source.fromFile(file, "UTF-8").getLines().toStream
-    streamConversion(streamInput, resultOutputStream)
+
+    streamConversion(scala.io.Source.fromFile(file, "UTF-8").getLines().toStream, resultOutputStream)
   }
 
-  def streamConversion(chunks: Stream[String], resultOutputStream: OutputStream): Long = {
+  def streamConversion(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Long = {
     val csvWriter = CSVWriter.open(resultOutputStream)
     val p = jawn.Parser.async[JValue](mode = AsyncParser.UnwrapArray)
 
