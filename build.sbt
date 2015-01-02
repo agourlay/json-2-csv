@@ -2,8 +2,6 @@ import scalariform.formatter.preferences._
 
 name := "json2CsvStream"
 
-jarName in assembly := "jsonToCsv.jar"
-
 version := "0.1-SNAPSHOT"
 
 scalaVersion := "2.11.4"
@@ -35,15 +33,15 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
 
 libraryDependencies ++= {
   val commonsIoV = "2.4"
-  val scalaTestV = "2.2.2"
+  val scalaTestV = "2.2.3"
   val jawnV      = "0.7.1"
   val scalaCsvV  = "1.1.2"
   val logbackV   = "1.1.2"
   Seq(
-     "commons-io"           % "commons-io"       % commonsIoV
-    ,"org.spire-math"       %% "jawn-ast"        % jawnV
+     "org.spire-math"       %% "jawn-ast"        % jawnV
     ,"com.github.tototoshi" %% "scala-csv"       % scalaCsvV
     ,"ch.qos.logback"       %  "logback-classic" % logbackV
+    ,"commons-io"           %  "commons-io"      % commonsIoV % "test"
     ,"org.scalatest"        %% "scalatest"       % scalaTestV % "test"
   )
 }

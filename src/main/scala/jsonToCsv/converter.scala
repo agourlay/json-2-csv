@@ -16,7 +16,7 @@ import java.io.{ File, OutputStream }
 
 object Converter {
 
-  val log = LoggerFactory.getLogger(this.getClass)
+  private val log = LoggerFactory.getLogger(this.getClass)
 
   def fileConversion(file: File, resultOutputStream: OutputStream): Long = {
     if (!file.isFile()) {
@@ -159,23 +159,23 @@ object Converter {
   }
 }
 
-case class Progress(keysSeen: SortedSet[Key] = SortedSet.empty[Key], rowCount: Long = 0L) {
+private case class Progress(keysSeen: SortedSet[Key] = SortedSet.empty[Key], rowCount: Long = 0L) {
   def +(other: Progress) = copy(keysSeen ++ other.keysSeen, rowCount + other.rowCount)
 }
 
-case class Key(segments: Vector[String]) {
+private case class Key(segments: Vector[String]) {
   val physicalHeader = segments.mkString(Key.nestedColumnnSeparator)
   def +(other: Key) = copy(segments ++: other.segments)
   def addSegment(other: String) = copy(segments :+ other)
 }
 
-object Key {
+private object Key {
   val nestedColumnnSeparator = "."
   val emptyKey = Key(Vector())
   def fromPhysicalKey(pKey: String) = Key(pKey.split(nestedColumnnSeparator).toVector)
   implicit val orderingByPhysicalHeader: Ordering[Key] = Ordering.by(k ⇒ k.physicalHeader)
 }
 
-case class Cell(key: Key, value: JValue) {
+private case class Cell(key: Key, value: JValue) {
   val physicalKey = key.physicalHeader
 }
