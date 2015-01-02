@@ -8,23 +8,23 @@ json-2-csv-stream [![Build Status](https://travis-ci.org/agourlay/json-2-csv-str
 - the JSON objects at the collection level must share a common structure.
 - the first element should be a complete definition of the structure, the following elements can be sparse.
 
-# Input & output formats
+## Input & output formats
 
 A json file containing a collection of one object like [this](https://github.com/agourlay/json-2-csv-stream/blob/master/src/test/resources/test.json) will be transformed into a CSV file like [that](https://github.com/agourlay/json-2-csv-stream/blob/master/src/test/resources/test-json.csv).
 
-# API
+## APIs
 
 Two methods on the ```Converter``` object returning the number of CSV lines written:
 
 ```
-def fileConversion(file: File, resultOutputStream: OutputStream): Long
+def fileConversion(file: File, resultOutputStream: OutputStream): Try[Long]
 ```
 
 ```
-def streamConversion(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Long
+def streamConversion(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Try[Long]
 ```
 
-# Usage example as a standalone program
+## Usage example as a standalone program
 
 ```
 object Boot {

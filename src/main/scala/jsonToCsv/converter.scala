@@ -2,6 +2,7 @@ package json2CsvStream
 
 import scala.annotation.tailrec
 import scala.collection.SortedSet
+import scala.util._
 
 import org.slf4j.LoggerFactory
 
@@ -18,16 +19,17 @@ object Converter {
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
-  def fileConversion(file: File, resultOutputStream: OutputStream): Long = {
+  def fileConversion(file: File, resultOutputStream: OutputStream): Try[Long] = {
     if (!file.isFile()) {
-      log.error("The file " + file.getCanonicalPath() + " does not exists")
-      System.exit(0)
+      val msg = "The file " + file.getCanonicalPath() + " does not exists"
+      log.error(msg)
+      new Failure(new RuntimeException(msg))
     }
 
     streamConversion(scala.io.Source.fromFile(file, "UTF-8").getLines().toStream, resultOutputStream)
   }
 
-  def streamConversion(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Long = {
+  def streamConversion(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Try[Long] = {
     val csvWriter = CSVWriter.open(resultOutputStream)
     val p = jawn.Parser.async[JValue](mode = AsyncParser.UnwrapArray)
 
@@ -49,7 +51,7 @@ object Converter {
 
         Progress(newKeys, rowsNbWritten)
       case _ ⇒
-        log.warn(s"Parsing something else $j")
+        log.error(s"Found and ignoring a non JSON object - $j")
         progress
     }
 
@@ -152,10 +154,12 @@ object Converter {
       }
 
     // Business Time!
-    val finalRowCount = loop(chunks, p).rowCount
-    csvWriter.close()
-    log.info(s"Conversion completed : $finalRowCount CSV rows generated")
-    finalRowCount
+    Try {
+      val finalRowCount = loop(chunks, p).rowCount
+      csvWriter.close()
+      log.info(s"Conversion completed : $finalRowCount CSV rows generated")
+      finalRowCount
+    }
   }
 }
 
