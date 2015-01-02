@@ -13,7 +13,7 @@ class ConverterAcceptanceSpec extends WordSpec with Matchers {
       val inputFile = new File(getClass.getResource("/test.json").getPath())
       val outputName = "delete.csv"
       val resultOutputStream = new FileOutputStream(outputName)
-      Converter.fileConversion(inputFile, resultOutputStream)
+      Json2CsvStream.convert(inputFile, resultOutputStream)
 
       val resultFile = new File(outputName)
       val resultFileContent = FileUtils.readFileToString(resultFile)

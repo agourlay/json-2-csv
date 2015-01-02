@@ -19,7 +19,7 @@ class ConverterPerfSpec extends WordSpec with Matchers {
   // Helper to stressTest memory. 
   def stressMemoryTestBuilder(n: Int) {
     // test.json containing 3 objects.
-    Converter.streamConversion(repeatTestFileContent(n / 3), new NullOutputStream())
+    Json2CsvStream.convert(repeatTestFileContent(n / 3), new NullOutputStream())
     assert(true) // Not blowing up here means success.
   }
 
