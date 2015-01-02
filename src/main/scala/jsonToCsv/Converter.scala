@@ -118,7 +118,7 @@ private object Converter {
       case Stream.Empty ⇒
         p.finish() match {
           case Left(ex) ⇒
-            Failure(new RuntimeException(ex))
+            Failure(ex)
           case Right(jsSeq) ⇒
             Try {
               jsSeq.foldLeft(progress) { (a, b) ⇒ a + processJValue(b, a, w).get }
@@ -127,7 +127,7 @@ private object Converter {
       case s #:: tail ⇒
         p.absorb(s) match {
           case Left(ex) ⇒
-            Failure(new RuntimeException(ex))
+            Failure(ex)
           case Right(jsSeq) ⇒
             Try {
               jsSeq.foldLeft(progress) { (a, b) ⇒ a + processJValue(b, a, w).get }

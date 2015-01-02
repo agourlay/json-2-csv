@@ -1,6 +1,7 @@
 package json2CsvStream
 
 import scala.util.{ Try, Failure }
+import scala.io.Source
 
 import com.github.tototoshi.csv.CSVWriter
 
@@ -8,15 +9,15 @@ import jawn.ast._
 import jawn.ast.JParser._
 import jawn.AsyncParser
 
-import java.io.{ File, OutputStream }
+import java.io.{ File, OutputStream, FileNotFoundException }
 
 object Json2CsvStream {
 
   def convert(file: File, resultOutputStream: OutputStream): Try[Long] = {
     if (!file.isFile()) {
-      Failure(new RuntimeException("The file " + file.getCanonicalPath() + " does not exists"))
+      Failure(new FileNotFoundException("The file " + file.getCanonicalPath() + " does not exists"))
     } else {
-      convert(scala.io.Source.fromFile(file, "UTF-8").getLines().toStream, resultOutputStream)
+      convert(Source.fromFile(file, "UTF-8").getLines().toStream, resultOutputStream)
     }
   }
 
