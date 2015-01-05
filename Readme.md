@@ -24,7 +24,7 @@ When nested objects are turned into extra columns and the content of the parent 
 
 Two methods on the ```Json2CsvStream``` object returning a ```Try``` of the number of CSV lines written to the ```OutputStream```:
 
-```
+```scala
 def convert(file: File, resultOutputStream: OutputStream): Try[Long]
 
 def convert(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Try[Long]
@@ -32,7 +32,7 @@ def convert(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Try[L
 
 ## Usage example as a standalone program
 
-```
+```scala
 object Boot {
   def main(args: Array[String]): Unit = {
     if (args.isEmpty) println("Error - Provide the file path as argument ")
