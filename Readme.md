@@ -16,9 +16,9 @@ json-2-csv-stream [![Build Status](https://travis-ci.org/agourlay/json-2-csv-str
 
 ## Input & output formats
 
-A json file containing a collection like [this](https://github.com/agourlay/json-2-csv-stream/blob/master/src/test/resources/test.json) is transformed into a CSV file like [that](https://github.com/agourlay/json-2-csv-stream/blob/master/src/test/resources/test-json.csv).
+A file containing a JSON collection like [this](https://github.com/agourlay/json-2-csv-stream/blob/master/src/test/resources/test.json) is transformed into a CSV file like [that](https://github.com/agourlay/json-2-csv-stream/blob/master/src/test/resources/test-json.csv).
 
-When nested objects are turned into extra columns and the content of the parent objects is not repeated.
+When nested objects are turned into extra columns the content of the parent object is not repeated.
 
 ## APIs
 
@@ -38,7 +38,7 @@ object Boot {
     if (args.isEmpty) println("Error - Provide the file path as argument ")
     else {
         val input = new File(args(0))
-        val resultFileName = FilenameUtils.removeExtension(input.getName) + "-json.csv"
+        val resultFileName = "result-json.csv"
         val output = new FileOutputStream(resultFileName)
         Json2CsvStream.convert(input, output) match {
         	case Success(nb) => println(s"$nb CSV lines written")
