@@ -1,16 +1,17 @@
 json-2-csv-stream [![Build Status](https://travis-ci.org/agourlay/json-2-csv-stream.png?branch=master)](https://travis-ci.org/agourlay/json-2-csv-stream)
 =========
 
+A library transforming JSON collections into CSV files.
 
 ## Features
 
-- transforms a JSON collection loaded from a ```File``` or from a ```Stream[String]``` into a CSV file.
+- load JSON collections from a ```File``` or from a ```Stream[String]```.
 - nested objects are turned into extra columns and lines.
-- works in a streaming fashion allowing the processing of very large files with a small memory footprint.
+- works in a streaming fashion with a small memory footprint.
 
 ## Limitations
 
-- the JSON objects at the collection level must share a common structure.
+- the JSON objects in the collection level must share a common structure.
 - the first element should be a complete definition of the structure, the following elements can be sparse.
 - the transformation stops at the first error encountered.
 
@@ -37,10 +38,8 @@ object Boot {
   def main(args: Array[String]): Unit = {
     if (args.isEmpty) println("Error - Provide the file path as argument ")
     else {
-        val input = new File(args(0))
-        val resultFileName = "result-json.csv"
-        val output = new FileOutputStream(resultFileName)
-        Json2CsvStream.convert(input, output) match {
+        val output = new FileOutputStream("result-json.csv")
+        Json2CsvStream.convert(new File(args(0)), output) match {
         	case Success(nb) => println(s"$nb CSV lines written")
         	case Failure(e)  => println(s"Something bad happened $e")
   	    }

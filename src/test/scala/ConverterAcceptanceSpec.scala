@@ -1,10 +1,10 @@
-package test
+package com.github.agourlay.test
 
-import org.scalatest._
-import java.io._
+import org.scalatest.{ WordSpec, Matchers }
+import java.io.{ File, FileOutputStream }
 import org.apache.commons.io.FileUtils
 
-import json2CsvStream._
+import com.github.agourlay.json2CsvStream._
 
 class ConverterAcceptanceSpec extends WordSpec with Matchers {
 

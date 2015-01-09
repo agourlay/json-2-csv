@@ -1,17 +1,13 @@
-package json2CsvStream
+package com.github.agourlay.json2CsvStream
 
 import scala.annotation.tailrec
 import scala.collection.SortedSet
-import scala.util._
+import scala.util.{ Try, Failure, Success }
 
 import com.github.tototoshi.csv.CSVWriter
 
 import jawn.ast._
 import jawn.ast.JParser._
-import jawn.AsyncParser
-import jawn.ParseException
-
-import java.io.{ File, OutputStream }
 
 private object Converter {
 
@@ -28,8 +24,7 @@ private object Converter {
       if (progress.rowCount == 0) writeHeaders(newKeys, csvWriter)
 
       // Write rows
-      val reconciliatedValues = reconciliateValues(newKeys, cells)
-      val rowsNbWritten = writeRows(reconciliatedValues, csvWriter)
+      val rowsNbWritten = writeRows(reconcileValues(newKeys, cells), csvWriter)
 
       Success(Progress(newKeys, rowsNbWritten))
     case _ ⇒
@@ -40,7 +35,7 @@ private object Converter {
     csvWriter.writeRow(headers.map(_.physicalHeader).toSeq)
   }
 
-  def reconciliateValues(keys: SortedSet[Key], cells: Array[Cell]): Array[Cell] = {
+  def reconcileValues(keys: SortedSet[Key], cells: Array[Cell]): Array[Cell] = {
     val fakeValues = keys.filterNot(k ⇒ cells.exists(_.key == k)).map(k ⇒ Cell(k, JNull))
     val correctValues = cells.filter(c ⇒ keys.contains(c.key))
     correctValues ++: fakeValues.toArray
@@ -64,10 +59,10 @@ private object Converter {
       case j @ JTrue        ⇒ Array(Cell(key, j))
       case j @ JFalse       ⇒ Array(Cell(key, j))
       case JObject(jvalue)  ⇒ loopOverKeys(jvalue.toMap, key)
-      case JArray(jvalue) ⇒
-        if (jvalue.isEmpty) Array(Cell(key, JNull))
-        else if (isJArrayOfValues(jvalue)) Array(Cell(key, mergeJValue(jvalue)))
-        else loopOverValues(jvalue, key)
+      case JArray(jvalues) ⇒
+        if (jvalues.isEmpty) Array(Cell(key, JNull))
+        else if (isJArrayOfValues(jvalues)) Array(Cell(key, mergeJValue(jvalues)))
+        else loopOverValues(jvalues, key)
     }
 
   def mergeJValue(values: Array[JValue]): JValue = {
@@ -98,19 +93,19 @@ private object Converter {
     val rowsNbToWrite = groupedValues.values.maxBy(_.length).size
 
     for (i ← 0 until rowsNbToWrite) {
-      val row = if (groupedValues.values.isEmpty) Array()
+      val row = if (groupedValues.values.isEmpty) Array.empty
       else groupedValues.toArray.sortBy(_._1).map {
         case (k, values) ⇒ values.lift(i).map(_.value).getOrElse(JNull)
       }
 
-      csvWriter.writeRow(row.map(renderValue(_)))
+      csvWriter.writeRow(row.map(render(_)))
       csvWriter.flush()
     }
     rowsNbToWrite
   }
 
   //https://github.com/non/jawn/issues/13
-  def renderValue(v: JValue) = v.render(jawn.ast.FastRenderer).trim.replace("null", "").replace("[]", "")
+  def render(v: JValue) = v.render(jawn.ast.FastRenderer).trim.replace("null", "").replace("[]", "")
 
   @tailrec
   def consume(st: Stream[String], p: jawn.AsyncParser[JValue], w: CSVWriter, progress: Progress = Progress()): Try[Progress] =
