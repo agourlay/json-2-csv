@@ -1,10 +1,14 @@
 import scalariform.formatter.preferences._
 
-name := "json2CsvStream"
+import bintray.Plugin._
+
+name := "json-2-csv-stream"
 
 organization := "com.github.agourlay"
 
 version := "0.1-SNAPSHOT"
+
+licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
 scalaVersion := "2.11.5"
 
@@ -45,3 +49,5 @@ libraryDependencies ++= {
     ,"org.scalatest"        %% "scalatest"  % scalaTestV % "test"
   )
 }
+
+seq(bintraySettings:_*)
