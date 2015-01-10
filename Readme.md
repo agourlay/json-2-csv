@@ -1,4 +1,4 @@
-json-2-csv-stream [![Build Status](https://travis-ci.org/agourlay/json-2-csv-stream.png?branch=master)](https://travis-ci.org/agourlay/json-2-csv-stream)
+json-2-csv-stream [![Build Status](https://travis-ci.org/agourlay/json-2-csv-stream.png?branch=master)](https://travis-ci.org/agourlay/json-2-csv-stream)  [ ![Download](https://api.bintray.com/packages/agourlay/maven/json-2-csv-stream/images/download.svg) ](https://bintray.com/agourlay/maven/json-2-csv-stream/_latestVersion)
 =========
 
 A library transforming JSON collections into CSV files.
