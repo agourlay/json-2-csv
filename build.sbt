@@ -10,7 +10,7 @@ version := "0.2.SNAPSHOT"
 
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.6"
 
 scalacOptions := Seq(
   "-unchecked",
@@ -39,9 +39,9 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
 
 libraryDependencies ++= {
   val commonsIoV = "2.4"
-  val scalaTestV = "2.2.3"
+  val scalaTestV = "2.2.4"
   val jawnV      = "0.7.2"
-  val scalaCsvV  = "1.1.2"
+  val scalaCsvV  = "1.2.0"
   Seq(
      "org.spire-math"       %% "jawn-ast"   % jawnV
     ,"com.github.tototoshi" %% "scala-csv"  % scalaCsvV

@@ -1,11 +1,11 @@
 package com.github.agourlay.test
 
-import org.scalatest.{ WordSpec, Matchers }
 import java.io.File
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.output.NullOutputStream
 
 import com.github.agourlay.json2CsvStream._
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.output.NullOutputStream
+import org.scalatest.{ Matchers, WordSpec }
 
 class ConverterPerfSpec extends WordSpec with Matchers {
 
@@ -25,7 +25,7 @@ class ConverterPerfSpec extends WordSpec with Matchers {
 
   // Helper to build Stream[String] from the test.json containing 3 objects.
   def repeatTestFileContent(n: Int): Stream[String] = {
-    val resultFile = new File(getClass.getResource("/test.json").getPath())
+    val resultFile = new File(getClass.getResource("/test.json").getPath)
     // remove "[]"
     val twoJsons = FileUtils.readFileToString(resultFile).drop(1).dropRight(1)
     "[" #:: Stream.continually[String](twoJsons + ",").take(n - 1)

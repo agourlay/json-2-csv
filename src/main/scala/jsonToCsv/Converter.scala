@@ -1,13 +1,12 @@
 package com.github.agourlay.json2CsvStream
 
+import com.github.tototoshi.csv.CSVWriter
+import jawn.ast.JParser._
+import jawn.ast._
+
 import scala.annotation.tailrec
 import scala.collection.SortedSet
-import scala.util.{ Try, Failure, Success }
-
-import com.github.tototoshi.csv.CSVWriter
-
-import jawn.ast._
-import jawn.ast.JParser._
+import scala.util.{ Failure, Success, Try }
 
 private object Converter {
 
@@ -43,13 +42,13 @@ private object Converter {
 
   def loopOverKeys(values: Map[String, JValue], key: Key = Key.emptyKey): Array[Cell] =
     values.map {
-      case (k, v) ⇒ jvalueMatcher(v, key.addSegment(k))
+      case (k, v) ⇒ JValueMatcher(v, key.addSegment(k))
     }.toArray.flatten
 
   def loopOverValues(values: Array[JValue], key: Key): Array[Cell] =
-    values.flatMap(jvalueMatcher(_, key))
+    values.flatMap(JValueMatcher(_, key))
 
-  def jvalueMatcher(value: JValue, key: Key): Array[Cell] =
+  def JValueMatcher(value: JValue, key: Key): Array[Cell] =
     value match {
       case j @ JNull        ⇒ Array(Cell(key, j))
       case j @ JString(_)   ⇒ Array(Cell(key, j))
@@ -66,8 +65,8 @@ private object Converter {
     }
 
   def mergeJValue(values: Array[JValue]): JValue = {
-    val r = values.map { v ⇒
-      v match {
+    val r = values.map {
+      _ match {
         case JString(jvalue)   ⇒ jvalue
         case LongNum(jvalue)   ⇒ jvalue.toString
         case DoubleNum(jvalue) ⇒ jvalue.toString
@@ -95,10 +94,10 @@ private object Converter {
     for (i ← 0 until rowsNbToWrite) {
       val row = if (groupedValues.values.isEmpty) Array.empty
       else groupedValues.toArray.sortBy(_._1).map {
-        case (k, values) ⇒ values.lift(i).map(_.value).getOrElse(JNull)
+        case (k, vs) ⇒ vs.lift(i).map(_.value).getOrElse(JNull)
       }
 
-      csvWriter.writeRow(row.map(render(_)))
+      csvWriter.writeRow(row.map(render))
       csvWriter.flush()
     }
     rowsNbToWrite
@@ -139,15 +138,15 @@ case class Progress(keysSeen: SortedSet[Key] = SortedSet.empty[Key], rowCount: L
 }
 
 case class Key(segments: Vector[String]) {
-  val physicalHeader = segments.mkString(Key.nestedColumnnSeparator)
+  val physicalHeader = segments.mkString(Key.nestedColumnSeparator)
   def +(other: Key) = copy(segments ++: other.segments)
   def addSegment(other: String) = copy(segments :+ other)
 }
 
 object Key {
-  val nestedColumnnSeparator = "."
+  val nestedColumnSeparator = "."
   val emptyKey = Key(Vector())
-  def fromPhysicalKey(pKey: String) = Key(pKey.split(nestedColumnnSeparator).toVector)
+  def fromPhysicalKey(pKey: String) = Key(pKey.split(nestedColumnSeparator).toVector)
   implicit val orderingByPhysicalHeader: Ordering[Key] = Ordering.by(k ⇒ k.physicalHeader)
 }
 
