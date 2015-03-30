@@ -66,30 +66,26 @@ private object Converter {
 
   def mergeJValue(values: Array[JValue]): JValue = {
     val r = values.map {
-      _ match {
-        case JString(jvalue)   ⇒ jvalue
-        case LongNum(jvalue)   ⇒ jvalue.toString
-        case DoubleNum(jvalue) ⇒ jvalue.toString
-        case DeferNum(jvalue)  ⇒ jvalue.toString
-        case JTrue             ⇒ "true"
-        case JFalse            ⇒ "false"
-        case _                 ⇒ ""
-      }
+      case JString(jvalue)   ⇒ jvalue
+      case LongNum(jvalue)   ⇒ jvalue.toString
+      case DoubleNum(jvalue) ⇒ jvalue.toString
+      case DeferNum(jvalue)  ⇒ jvalue.toString
+      case JTrue             ⇒ "true"
+      case JFalse            ⇒ "false"
+      case _                 ⇒ ""
     }.mkString(", ")
     JString(r)
   }
 
   def isJArrayOfValues(vs: Array[JValue]): Boolean =
     vs.forall {
-      _ match {
-        case JNull | JString(_) | LongNum(_) | DoubleNum(_) | DeferNum(_) | JTrue | JFalse ⇒ true
-        case _                                                                             ⇒ false
-      }
+      case JNull | JString(_) | LongNum(_) | DoubleNum(_) | DeferNum(_) | JTrue | JFalse ⇒ true
+      case _                                                                             ⇒ false
     }
 
   def writeRows(values: Array[Cell], csvWriter: CSVWriter): Long = {
     val groupedValues = values.groupBy(_.physicalKey)
-    val rowsNbToWrite = groupedValues.values.maxBy(_.length).size
+    val rowsNbToWrite = groupedValues.values.maxBy(_.length).length
 
     for (i ← 0 until rowsNbToWrite) {
       val row = if (groupedValues.values.isEmpty) Array.empty

@@ -41,7 +41,7 @@ libraryDependencies ++= {
   val commonsIoV = "2.4"
   val scalaTestV = "2.2.4"
   val jawnV      = "0.7.2"
-  val scalaCsvV  = "1.2.0"
+  val scalaCsvV  = "1.2.1"
   Seq(
      "org.spire-math"       %% "jawn-ast"   % jawnV
     ,"com.github.tototoshi" %% "scala-csv"  % scalaCsvV
@@ -50,4 +50,4 @@ libraryDependencies ++= {
   )
 }
 
-seq(bintraySettings:_*)
+Seq(bintraySettings:_*)
