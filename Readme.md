@@ -54,7 +54,7 @@ object Boot {
 resolvers += "agourlay at bintray" at "http://dl.bintray.com/agourlay/maven"
 
 libraryDependencies ++= List(
-  "com.github.agourlay" %% "json-2-csv-stream" % "0.1",
+  "com.github.agourlay" %% "json-2-csv-stream" % "0.1.1",
   ...
 )
 ```
