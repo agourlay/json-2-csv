@@ -1,4 +1,4 @@
-package com.github.agourlay.test
+package com.github.agourlay
 
 import java.io.File
 

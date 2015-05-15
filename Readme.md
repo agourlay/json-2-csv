@@ -3,21 +3,10 @@ json-2-csv-stream [![Build Status](https://travis-ci.org/agourlay/json-2-csv-str
 
 A library transforming JSON collections into CSV files.
 
-## Installation
-
-``` scala
-resolvers += "agourlay at bintray" at "http://dl.bintray.com/agourlay/maven"
-
-libraryDependencies ++= List(
-  "com.github.agourlay" %% "json-2-csv-stream" % "0.1",
-  ...
-)
-```
-
 ## Features
 
-- load JSON collections from a ```File``` or from a ```Stream[String]```.
-- nested objects are turned into extra columns and lines.
+- injest JSON collections from a ```File``` or from a ```Stream[String]```.
+- nested JSON objects are turned into extra CSV columns and lines.
 - works in a streaming fashion with a small memory footprint.
 
 ## Limitations
@@ -57,6 +46,17 @@ object Boot {
     }
   }
 }
+```
+
+## Installation
+
+``` scala
+resolvers += "agourlay at bintray" at "http://dl.bintray.com/agourlay/maven"
+
+libraryDependencies ++= List(
+  "com.github.agourlay" %% "json-2-csv-stream" % "0.1",
+  ...
+)
 ```
 
 ## License
