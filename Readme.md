@@ -31,7 +31,7 @@ def convert(file: File, resultOutputStream: OutputStream): Try[Long]
 def convert(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Try[Long]
 ```
 
-## Usage example as a standalone program
+## Usage example
 
 ```scala
 object Boot {
