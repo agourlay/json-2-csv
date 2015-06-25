@@ -10,7 +10,7 @@ version := "0.2.SNAPSHOT"
 
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 
 scalacOptions := Seq(
   "-unchecked",
