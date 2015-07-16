@@ -55,7 +55,7 @@ private object Converter {
       case j @ LongNum(_)   ⇒ Array(Cell(key, j))
       case j @ DoubleNum(_) ⇒ Array(Cell(key, j))
       case j @ DeferNum(_)  ⇒ Array(Cell(key, j))
-      case j @ DeferLong(_)  ⇒ Array(Cell(key, j))
+      case j @ DeferLong(_) ⇒ Array(Cell(key, j))
       case j @ JTrue        ⇒ Array(Cell(key, j))
       case j @ JFalse       ⇒ Array(Cell(key, j))
       case JObject(jvalue)  ⇒ loopOverKeys(jvalue.toMap, key)
@@ -71,7 +71,7 @@ private object Converter {
       case LongNum(jvalue)   ⇒ jvalue.toString
       case DoubleNum(jvalue) ⇒ jvalue.toString
       case DeferNum(jvalue)  ⇒ jvalue.toString
-      case DeferLong(jvalue)  ⇒ jvalue.toString
+      case DeferLong(jvalue) ⇒ jvalue.toString
       case JTrue             ⇒ "true"
       case JFalse            ⇒ "false"
       case _                 ⇒ ""
