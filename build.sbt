@@ -40,8 +40,8 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
 libraryDependencies ++= {
   val commonsIoV = "2.4"
   val scalaTestV = "2.2.5"
-  val jawnV      = "0.8.0"
-  val scalaCsvV  = "1.2.1"
+  val jawnV      = "0.8.2"
+  val scalaCsvV  = "1.2.2"
   Seq(
      "org.spire-math"       %% "jawn-ast"   % jawnV
     ,"com.github.tototoshi" %% "scala-csv"  % scalaCsvV
