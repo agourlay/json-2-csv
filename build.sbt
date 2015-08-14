@@ -1,7 +1,5 @@
 import scalariform.formatter.preferences._
 
-import bintray.Plugin._
-
 name := "json-2-csv-stream"
 
 organization := "com.github.agourlay"
@@ -40,7 +38,7 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
 libraryDependencies ++= {
   val commonsIoV = "2.4"
   val scalaTestV = "2.2.5"
-  val jawnV      = "0.8.2"
+  val jawnV      = "0.8.3"
   val scalaCsvV  = "1.2.2"
   Seq(
      "org.spire-math"       %% "jawn-ast"   % jawnV
@@ -49,5 +47,3 @@ libraryDependencies ++= {
     ,"org.scalatest"        %% "scalatest"  % scalaTestV % "test"
   )
 }
-
-Seq(bintraySettings:_*)
