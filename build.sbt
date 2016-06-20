@@ -35,7 +35,7 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(RewriteArrowSymbols, true)
 
 libraryDependencies ++= {
-  val commonsIoV = "2.4"
+  val commonsIoV = "2.5"
   val scalaTestV = "2.2.6"
   val jawnV      = "0.8.4"
   val scalaCsvV  = "1.3.2"
