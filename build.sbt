@@ -6,9 +6,9 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 name := "json-2-csv"
 
 organization := "com.github.agourlay"
-
+homepage := Some(url("https://github.com/agourlay/json-2-csv"))
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
-
+organizationHomepage := Some(url("https://github.com/agourlay/json-2-csv"))
 developers := Developer("agourlay", "Arnaud Gourlay", "", url("https://github.com/agourlay")) :: Nil
 scmInfo := Some(ScmInfo(
   browseUrl = url("https://github.com/agourlay/json-2-csv.git"),
