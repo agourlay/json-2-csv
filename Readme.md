@@ -17,7 +17,7 @@ A library transforming JSON collections into CSV files.
 
 ## Input & output formats
 
-A file containing a JSON collection like [this](https://github.com/agourlay/json-2-csv/blob/master/src/test/resources/test.json) is transformed into a CSV file like [that](https://github.com/agourlay/json-2-csv-stream/blob/master/src/test/resources/test-json.csv).
+A file containing a JSON collection like [this](https://github.com/agourlay/json-2-csv/blob/master/src/test/resources/test.json) is transformed into a CSV file like [that](https://github.com/agourlay/json-2-csv/blob/master/src/test/resources/test-json.csv).
 
 When nested objects are turned into extra columns the content of the parent object is not repeated.
 
@@ -36,13 +36,13 @@ def convert(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Try[L
 ```scala
 object Boot {
   def main(args: Array[String]): Unit = {
-    if (args.isEmpty) println("Error - Provide the file path as argument ")
+    if (args.isEmpty) println("Error - Provide the CSV file path as argument ")
     else {
-        val output = new FileOutputStream("result-json.csv")
-        Json2CsvStream.convert(new File(args(0)), output) match {
-        	case Success(nb) => println(s"$nb CSV lines written")
-        	case Failure(e)  => println(s"Something bad happened $e")
-  	    }
+      val output = new FileOutputStream("result-json.csv")
+      Json2Csv.convert(new File(args(0)), output) match {
+        case Success(nb) => println(s"$nb CSV lines written to 'result-json.csv'")
+        case Failure(e)  => println(s"Something bad happened $e")
+  	  }
     }
   }
 }
@@ -51,7 +51,7 @@ object Boot {
 ## Installation
 
 ``` scala
-libraryDependencies ++= List(
+libraryDependencies ++= Seq(
   "com.github.agourlay" %% "json-2-csv" % "0.2.2",
   ...
 )
