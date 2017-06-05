@@ -7,8 +7,6 @@ name := "json-2-csv"
 
 organization := "com.github.agourlay"
 
-version := "0.2.SNAPSHOT"
-
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
 developers := Developer("agourlay", "Arnaud Gourlay", "", url("https://github.com/agourlay")) :: Nil
