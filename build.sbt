@@ -11,6 +11,22 @@ version := "0.2.SNAPSHOT"
 
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
+developers := Developer("agourlay", "Arnaud Gourlay", "", url("https://github.com/agourlay")) :: Nil
+scmInfo := Some(ScmInfo(
+  browseUrl = url("https://github.com/agourlay/json-2-csv.git"),
+  connection = "scm:git:git@github.com:agourlay/json-2-csv.git"
+))
+
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+publishMavenStyle := true
+publishArtifact in Test := false
+pomIncludeRepository := (_ => false)
+publishTo := Some(
+  if (version.value.trim.endsWith("SNAPSHOT"))
+    "snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+  else
+    "releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2")
+
 scalaVersion := "2.12.2"
 
 scalacOptions := Seq(
