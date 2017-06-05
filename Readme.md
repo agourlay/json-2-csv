@@ -1,4 +1,4 @@
-json-2-csv [![Build Status](https://travis-ci.org/agourlay/json-2-csv-stream.svg?branch=master)](https://travis-ci.org/agourlay/json-2-csv-stream)  [ ![Download](https://api.bintray.com/packages/agourlay/maven/json-2-csv-stream/images/download.svg) ](https://bintray.com/agourlay/maven/json-2-csv-stream/_latestVersion)
+json-2-csv [![Build Status](https://travis-ci.org/agourlay/json-2-csv.svg?branch=master)](https://travis-ci.org/agourlay/json-2-csv) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.agourlay/json-2-csv_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.agourlay/json-2-csv_2.12)
 =========
 
 A library transforming JSON collections into CSV files.
@@ -17,7 +17,7 @@ A library transforming JSON collections into CSV files.
 
 ## Input & output formats
 
-A file containing a JSON collection like [this](https://github.com/agourlay/json-2-csv-stream/blob/master/src/test/resources/test.json) is transformed into a CSV file like [that](https://github.com/agourlay/json-2-csv-stream/blob/master/src/test/resources/test-json.csv).
+A file containing a JSON collection like [this](https://github.com/agourlay/json-2-csv/blob/master/src/test/resources/test.json) is transformed into a CSV file like [that](https://github.com/agourlay/json-2-csv-stream/blob/master/src/test/resources/test-json.csv).
 
 When nested objects are turned into extra columns the content of the parent object is not repeated.
 
@@ -52,7 +52,7 @@ object Boot {
 
 ``` scala
 libraryDependencies ++= List(
-  "com.github.agourlay" %% "json-2-csv-stream" % "0.1.3",
+  "com.github.agourlay" %% "json-2-csv" % "0.2.2",
   ...
 )
 ```
