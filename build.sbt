@@ -1,6 +1,9 @@
-import scalariform.formatter.preferences._
+import com.typesafe.sbt.SbtScalariform
 
-name := "json-2-csv-stream"
+import scalariform.formatter.preferences._
+import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+
+name := "json-2-csv"
 
 organization := "com.github.agourlay"
 
@@ -8,7 +11,7 @@ version := "0.2.SNAPSHOT"
 
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.2"
 
 scalacOptions := Seq(
   "-unchecked",
@@ -25,7 +28,7 @@ fork in Test := true
 
 javaOptions in Test ++= Seq("-Xmx1G")
 
-scalariformSettings
+SbtScalariform.scalariformSettings
 
 ScalariformKeys.preferences := ScalariformKeys.preferences.value
   .setPreference(AlignSingleLineCaseStatements, true)
@@ -36,9 +39,9 @@ ScalariformKeys.preferences := ScalariformKeys.preferences.value
 
 libraryDependencies ++= {
   val commonsIoV = "2.5"
-  val scalaTestV = "2.2.6"
-  val jawnV      = "0.8.4"
-  val scalaCsvV  = "1.3.2"
+  val scalaTestV = "3.0.3"
+  val jawnV      = "0.10.4"
+  val scalaCsvV  = "1.3.4"
   Seq(
      "org.spire-math"       %% "jawn-ast"   % jawnV
     ,"com.github.tototoshi" %% "scala-csv"  % scalaCsvV

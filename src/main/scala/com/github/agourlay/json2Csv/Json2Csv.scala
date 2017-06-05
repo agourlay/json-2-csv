@@ -1,4 +1,4 @@
-package com.github.agourlay.json2CsvStream
+package com.github.agourlay.json2Csv
 
 import java.io.{ File, FileNotFoundException, OutputStream }
 
@@ -10,7 +10,7 @@ import jawn.ast.JValue
 import scala.io.Source
 import scala.util.{ Failure, Try }
 
-object Json2CsvStream {
+object Json2Csv {
 
   def convert(file: File, resultOutputStream: OutputStream): Try[Long] =
     if (file.isFile) convert(Source.fromFile(file, "UTF-8").getLines().toStream, resultOutputStream)

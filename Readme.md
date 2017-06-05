@@ -1,11 +1,11 @@
-json-2-csv-stream [![Build Status](https://travis-ci.org/agourlay/json-2-csv-stream.png?branch=master)](https://travis-ci.org/agourlay/json-2-csv-stream)  [ ![Download](https://api.bintray.com/packages/agourlay/maven/json-2-csv-stream/images/download.svg) ](https://bintray.com/agourlay/maven/json-2-csv-stream/_latestVersion)
+json-2-csv [![Build Status](https://travis-ci.org/agourlay/json-2-csv-stream.svg?branch=master)](https://travis-ci.org/agourlay/json-2-csv-stream)  [ ![Download](https://api.bintray.com/packages/agourlay/maven/json-2-csv-stream/images/download.svg) ](https://bintray.com/agourlay/maven/json-2-csv-stream/_latestVersion)
 =========
 
 A library transforming JSON collections into CSV files.
 
 ## Features
 
-- injest JSON collections from a ```File``` or from a ```Stream[String]```.
+- ingests JSON collections from a ```File``` or from a ```Stream[String]```.
 - nested JSON objects are turned into extra CSV columns and lines.
 - works in a streaming fashion with a small memory footprint.
 
@@ -23,7 +23,7 @@ When nested objects are turned into extra columns the content of the parent obje
 
 ## APIs
 
-Two methods on the ```Json2CsvStream``` object returning a ```Try``` of the number of CSV lines written to the ```OutputStream```:
+Two methods on the ```Json2Csv``` object returning a ```Try``` of the number of CSV lines written to the ```OutputStream```:
 
 ```scala
 def convert(file: File, resultOutputStream: OutputStream): Try[Long]
@@ -51,8 +51,6 @@ object Boot {
 ## Installation
 
 ``` scala
-resolvers += "agourlay at bintray" at "http://dl.bintray.com/agourlay/maven"
-
 libraryDependencies ++= List(
   "com.github.agourlay" %% "json-2-csv-stream" % "0.1.3",
   ...

@@ -1,4 +1,4 @@
-package com.github.agourlay.json2CsvStream
+package com.github.agourlay.json2Csv
 
 import com.github.tototoshi.csv.CSVWriter
 import jawn.ast.JParser._
@@ -42,13 +42,13 @@ private object Converter {
 
   def loopOverKeys(values: Map[String, JValue], key: Key = Key.emptyKey): Array[Cell] =
     values.map {
-      case (k, v) ⇒ JValueMatcher(v, key.addSegment(k))
+      case (k, v) ⇒ jValueMatcher(v, key.addSegment(k))
     }.toArray.flatten
 
   def loopOverValues(values: Array[JValue], key: Key): Array[Cell] =
-    values.flatMap(JValueMatcher(_, key))
+    values.flatMap(jValueMatcher(_, key))
 
-  def JValueMatcher(value: JValue, key: Key): Array[Cell] =
+  def jValueMatcher(value: JValue, key: Key): Array[Cell] =
     value match {
       case j @ JNull        ⇒ Array(Cell(key, j))
       case j @ JString(_)   ⇒ Array(Cell(key, j))
@@ -92,7 +92,7 @@ private object Converter {
     for (i ← 0 until rowsNbToWrite) {
       val row = if (groupedValues.values.isEmpty) Array.empty
       else groupedValues.toArray.sortBy(_._1).map {
-        case (k, vs) ⇒ vs.lift(i).map(_.value).getOrElse(JNull)
+        case (_, vs) ⇒ vs.lift(i).map(_.value).getOrElse(JNull)
       }
 
       csvWriter.writeRow(row.map(render))
