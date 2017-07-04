@@ -42,7 +42,7 @@ object Boot {
       Json2Csv.convert(new File(args(0)), output) match {
         case Success(nb) => println(s"$nb CSV lines written to 'result-json.csv'")
         case Failure(e)  => println(s"Something bad happened $e")
-  	  }
+      }
     }
   }
 }
@@ -52,7 +52,7 @@ object Boot {
 
 ``` scala
 libraryDependencies ++= Seq(
-  "com.github.agourlay" %% "json-2-csv" % "0.2.2",
+  "com.github.agourlay" %% "json-2-csv" % "0.2.3",
   ...
 )
 ```
