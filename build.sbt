@@ -1,5 +1,3 @@
-import com.typesafe.sbt.SbtScalariform
-
 import scalariform.formatter.preferences._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 
@@ -25,8 +23,8 @@ publishTo := Some(
   else
     "releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2")
 
-scalaVersion := "2.12.3"
-crossScalaVersions := Seq("2.11.11", "2.12.3")
+scalaVersion := "2.12.6"
+crossScalaVersions := Seq("2.11.12", "2.12.6")
 
 scalacOptions := Seq(
   "-unchecked",
@@ -43,20 +41,19 @@ fork in Test := true
 
 javaOptions in Test ++= Seq("-Xmx1G")
 
-SbtScalariform.scalariformSettings
-
-ScalariformKeys.preferences := ScalariformKeys.preferences.value
-  .setPreference(AlignSingleLineCaseStatements, true)
-  .setPreference(AlignSingleLineCaseStatements.MaxArrowIndent, 100)
-  .setPreference(AlignParameters, true)
-  .setPreference(DoubleIndentClassDeclaration, true)
-  .setPreference(RewriteArrowSymbols, true)
+ScalariformKeys.preferences :=
+  scalariformPreferences.value
+    .setPreference(AlignSingleLineCaseStatements, true)
+    .setPreference(AlignSingleLineCaseStatements.MaxArrowIndent, 100)
+    .setPreference(DoubleIndentConstructorArguments, true)
+    .setPreference(RewriteArrowSymbols, true)
+    .setPreference(DanglingCloseParenthesis, Preserve)
 
 libraryDependencies ++= {
-  val commonsIoV = "2.5"
-  val scalaTestV = "3.0.3"
-  val jawnV      = "0.11.0"
-  val scalaCsvV  = "1.3.4"
+  val commonsIoV = "2.6"
+  val scalaTestV = "3.0.5"
+  val jawnV      = "0.12.1"
+  val scalaCsvV  = "1.3.5"
   Seq(
      "org.spire-math"       %% "jawn-ast"   % jawnV
     ,"com.github.tototoshi" %% "scala-csv"  % scalaCsvV
