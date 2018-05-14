@@ -7,6 +7,7 @@ import jawn.ast._
 import scala.annotation.tailrec
 import scala.collection.SortedSet
 import scala.util.{ Failure, Success, Try }
+import scala.collection.breakOut
 
 private object Converter {
 
@@ -31,19 +32,21 @@ private object Converter {
   }
 
   def writeHeaders(headers: SortedSet[Key], csvWriter: CSVWriter) {
-    csvWriter.writeRow(headers.map(_.physicalHeader).toSeq)
+    csvWriter.writeRow(headers.map(_.physicalHeader)(breakOut))
   }
 
   def reconcileValues(keys: SortedSet[Key], cells: Array[Cell]): Array[Cell] = {
-    val fakeValues = keys.filterNot(k ⇒ cells.exists(_.key == k)).map(k ⇒ Cell(k, JNull))
-    val correctValues = cells.filter(c ⇒ keys.contains(c.key))
-    correctValues ++: fakeValues.toArray
+    val fakeValues: Array[Cell] = keys.filterNot(k ⇒ cells.exists(_.key == k)).map(k ⇒ Cell(k, JNull))(breakOut)
+    val correctValues: Array[Cell] = cells.filter(c ⇒ keys.contains(c.key))
+    correctValues ++: fakeValues
   }
 
-  def loopOverKeys(values: Map[String, JValue], key: Key = Key.emptyKey): Array[Cell] =
-    values.map {
+  def loopOverKeys(values: Map[String, JValue], key: Key = Key.emptyKey): Array[Cell] = {
+    val arrays: Array[Array[Cell]] = values.map {
       case (k, v) ⇒ jValueMatcher(v, key.addSegment(k))
-    }.toArray.flatten
+    }(breakOut)
+    arrays.flatten
+  }
 
   def loopOverValues(values: Array[JValue], key: Key): Array[Cell] =
     values.flatMap(jValueMatcher(_, key))
