@@ -8,15 +8,16 @@ import jawn.ast.JParser._
 import jawn.ast.JValue
 
 import scala.io.Source
-import scala.util.{ Failure, Try }
 
 object Json2Csv {
 
-  def convert(file: File, resultOutputStream: OutputStream): Try[Long] =
-    if (file.isFile) convert(Source.fromFile(file, "UTF-8").getLines().toStream, resultOutputStream)
-    else Failure(new FileNotFoundException("The file " + file.getCanonicalPath + " does not exists"))
+  def convert(file: File, resultOutputStream: OutputStream): Either[Exception, Long] =
+    if (file.isFile)
+      convert(Source.fromFile(file, "UTF-8").getLines().toStream, resultOutputStream)
+    else
+      Left(new FileNotFoundException("The file " + file.getCanonicalPath + " does not exists"))
 
-  def convert(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Try[Long] = {
+  def convert(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Either[Exception, Long] = {
     val csvWriter = CSVWriter.open(resultOutputStream)(jsonCSVFormat)
     val parser = jawn.Parser.async[JValue](mode = AsyncParser.UnwrapArray)
     val finalProgress = Converter.consume(chunks, parser, csvWriter)

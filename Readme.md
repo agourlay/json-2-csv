@@ -5,7 +5,7 @@ A library transforming JSON collections into CSV files.
 
 ## Features
 
-- ingests JSON collections from a ```File``` or from a ```Stream[String]```.
+- ingests JSON collections from a `File` or from a `Stream[String]`.
 - nested JSON objects are turned into extra CSV columns and lines.
 - works in a streaming fashion with a small memory footprint.
 
@@ -23,12 +23,12 @@ When nested objects are turned into extra columns the content of the parent obje
 
 ## APIs
 
-Two methods on the ```Json2Csv``` object returning a ```Try``` of the number of CSV lines written to the ```OutputStream```:
+Two methods on the `Json2Csv` object returning an `Either` of the number of CSV lines written to the `OutputStream`:
 
 ```scala
-def convert(file: File, resultOutputStream: OutputStream): Try[Long]
+def convert(file: File, resultOutputStream: OutputStream): Either[Exception, Long]
 
-def convert(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Try[Long]
+def convert(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Either[Exception, Long]
 ```
 
 ## Usage example
@@ -40,8 +40,8 @@ object Boot {
     else {
       val output = new FileOutputStream("result-json.csv")
       Json2Csv.convert(new File(args(0)), output) match {
-        case Success(nb) => println(s"$nb CSV lines written to 'result-json.csv'")
-        case Failure(e)  => println(s"Something bad happened $e")
+        case Right(nb) => println(s"$nb CSV lines written to 'result-json.csv'")
+        case Left(e)  => println(s"Something bad happened $e")
       }
     }
   }

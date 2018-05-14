@@ -6,12 +6,11 @@ import jawn.ast._
 
 import scala.annotation.tailrec
 import scala.collection.SortedSet
-import scala.util.{ Failure, Success, Try }
 import scala.collection.breakOut
 
 private object Converter {
 
-  def processJValue(j: JValue, progress: Progress, csvWriter: CSVWriter): Try[Progress] = j match {
+  def processJValue(j: JValue, progress: Progress, csvWriter: CSVWriter): Either[Exception, Progress] = j match {
     case JObject(values) ⇒
       val cells = loopOverKeys(values.toMap)
       // First element should contain complete schema
@@ -26,9 +25,9 @@ private object Converter {
       // Write rows
       val rowsNbWritten = writeRows(reconcileValues(newKeys, cells), csvWriter)
 
-      Success(Progress(newKeys, rowsNbWritten))
+      Right(Progress(newKeys, rowsNbWritten))
     case _ ⇒
-      Failure(new RuntimeException(s"Found a non JSON object - $j"))
+      Left(new RuntimeException(s"Found a non JSON object - $j"))
   }
 
   def writeHeaders(headers: SortedSet[Key], csvWriter: CSVWriter) {
@@ -63,9 +62,12 @@ private object Converter {
       case j @ JFalse       ⇒ Array(Cell(key, j))
       case JObject(jvalue)  ⇒ loopOverKeys(jvalue.toMap, key)
       case JArray(jvalues) ⇒
-        if (jvalues.isEmpty) Array(Cell(key, JNull))
-        else if (isJArrayOfValues(jvalues)) Array(Cell(key, mergeJValue(jvalues)))
-        else loopOverValues(jvalues, key)
+        if (jvalues.isEmpty)
+          Array(Cell(key, JNull))
+        else if (isJArrayOfValues(jvalues))
+          Array(Cell(key, mergeJValue(jvalues)))
+        else
+          loopOverValues(jvalues, key)
     }
 
   def mergeJValue(values: Array[JValue]): JValue = {
@@ -89,53 +91,70 @@ private object Converter {
     }
 
   def writeRows(values: Array[Cell], csvWriter: CSVWriter): Long = {
-    val groupedValues = values.groupBy(_.physicalKey)
-    val rowsNbToWrite = groupedValues.values.maxBy(_.length).length
+    val groupedValues = values.groupBy(_.key.physicalHeader)
 
-    for (i ← 0 until rowsNbToWrite) {
-      val row = if (groupedValues.values.isEmpty) Array.empty
-      else groupedValues.toArray.sortBy(_._1).map {
-        case (_, vs) ⇒ vs.lift(i).map(_.value).getOrElse(JNull)
+    if (groupedValues.values.isEmpty)
+      0
+    else {
+      val rowsNbToWrite = groupedValues.values.maxBy(_.length).length
+      val sortedRows: Array[(String, Array[Cell])] = groupedValues.toArray.sortBy(_._1)
+
+      for (i ← 0 until rowsNbToWrite) {
+        val row: Array[JValue] = sortedRows.map {
+          case (_, vs) ⇒ vs.lift(i).map(_.value).getOrElse(JNull)
+        }
+
+        csvWriter.writeRow(row.map(render))
+        csvWriter.flush()
       }
-
-      csvWriter.writeRow(row.map(render))
-      csvWriter.flush()
+      rowsNbToWrite
     }
-    rowsNbToWrite
   }
 
   //https://github.com/non/jawn/issues/13
-  def render(v: JValue) = v.render(jawn.ast.FastRenderer).trim.replace("null", "").replace("[]", "")
+  def render(v: JValue): String = v.render(jawn.ast.FastRenderer).trim.replace("null", "").replace("[]", "")
 
   @tailrec
-  def consume(st: Stream[String], p: jawn.AsyncParser[JValue], w: CSVWriter, progress: Progress = Progress()): Try[Progress] =
+  def consume(st: Stream[String], p: jawn.AsyncParser[JValue], w: CSVWriter, progress: Progress = Progress()): Either[Exception, Progress] =
     st match {
       case Stream.Empty ⇒
-        p.finish() match {
-          case Left(ex) ⇒
-            Failure(ex)
-          case Right(jsSeq) ⇒
-            Try {
-              jsSeq.foldLeft(progress) { (a, b) ⇒ a + processJValue(b, a, w).get }
-            }
-        }
+        p.finish().flatMap(jsSeq ⇒ processJValues(progress, jsSeq, w))
       case s #:: tail ⇒
         p.absorb(s) match {
-          case Left(ex) ⇒
-            Failure(ex)
           case Right(jsSeq) ⇒
-            Try {
-              jsSeq.foldLeft(progress) { (a, b) ⇒ a + processJValue(b, a, w).get }
-            } match {
-              case Success(acc) ⇒ consume(tail, p, w, acc)
-              case Failure(e)   ⇒ Failure(e)
+            processJValues(progress, jsSeq, w) match {
+              case Right(acc) ⇒ consume(tail, p, w, acc)
+              case Left(e)    ⇒ Left(e)
             }
+          case Left(e) ⇒ Left(e)
         }
     }
+
+  def processJValues(initProgress: Progress, jvalues: Seq[JValue], w: CSVWriter): Either[Exception, Progress] = {
+    // Ghetto traverse foldMap
+    def eitherTraverse[A, B](seq: Seq[A], init: B, merger: (B, B) ⇒ B)(f: (B, A) ⇒ Either[Exception, B]): Either[Exception, B] = {
+      @tailrec
+      def loop(ops: Seq[A], acc: B): Either[Exception, B] =
+        if (ops.isEmpty)
+          Right(acc)
+        else
+          f(acc, ops.head) match {
+            case Right(h) ⇒ loop(ops.tail, merger(acc, h))
+            case Left(e)  ⇒ Left(e)
+          }
+
+      loop(seq, init)
+    }
+
+    eitherTraverse(jvalues, initProgress, Progress.append)((a, b) ⇒ processJValue(b, a, w))
+  }
+
 }
 
-case class Progress(keysSeen: SortedSet[Key] = SortedSet.empty[Key], rowCount: Long = 0L) {
-  def +(other: Progress) = copy(keysSeen ++ other.keysSeen, rowCount + other.rowCount)
+case class Progress(keysSeen: SortedSet[Key] = SortedSet.empty[Key], rowCount: Long = 0L)
+
+object Progress {
+  def append(a: Progress, b: Progress): Progress = a.copy(a.keysSeen ++ b.keysSeen, a.rowCount + b.rowCount)
 }
 
 case class Key(segments: Vector[String]) {
@@ -151,6 +170,4 @@ object Key {
   implicit val orderingByPhysicalHeader: Ordering[Key] = Ordering.by(k ⇒ k.physicalHeader)
 }
 
-case class Cell(key: Key, value: JValue) {
-  val physicalKey = key.physicalHeader
-}
+case class Cell(key: Key, value: JValue)
