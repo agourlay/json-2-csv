@@ -61,3 +61,19 @@ libraryDependencies ++= {
     ,"org.scalatest"        %% "scalatest"  % scalaTestV % "test"
   )
 }
+
+
+// Publishing
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+useGpg := true
+pgpSecretRing := file("/Users/agourlay/.pgpKeys/agourlay-privkey.gpg")
+pgpPublicRing := file("/Users/agourlay/.pgpKeys/agourlay-pubkey.gpg")
+pgpPassphrase := sys.env.get("PGP_PASS").map(_.toArray)
+publishMavenStyle := true
+publishArtifact in Test := false
+pomIncludeRepository := (_ => false)
+publishTo := Some(
+  if (version.value.trim.endsWith("SNAPSHOT"))
+    "snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+  else
+    "releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2")
