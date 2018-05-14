@@ -52,7 +52,7 @@ object Boot {
 
 ``` scala
 libraryDependencies ++= Seq(
-  "com.github.agourlay" %% "json-2-csv" % "0.3.0",
+  "com.github.agourlay" %% "json-2-csv" % "0.4.0",
   ...
 )
 ```
