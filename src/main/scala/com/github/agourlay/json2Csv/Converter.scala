@@ -10,9 +10,15 @@ import scala.collection.breakOut
 
 private object Converter {
 
+  private val trueStr = "true"
+  private val falseStr = "false"
+  private val emptyStr = ""
+  private val nullStr = "null"
+  private val emptyArrayStr = "[]"
+
   def processJValue(j: JValue, progress: Progress, csvWriter: CSVWriter): Either[Exception, Progress] = j match {
     case JObject(values) ⇒
-      val cells = loopOverKeys(values.toMap)
+      val cells = loopOverKeys(values)
       // First element should contain complete schema
       val newKeys = {
         if (progress.keysSeen.isEmpty) progress.keysSeen ++ cells.map(_.key)
@@ -35,12 +41,15 @@ private object Converter {
   }
 
   def reconcileValues(keys: SortedSet[Key], cells: Array[Cell]): Array[Cell] = {
-    val fakeValues: Array[Cell] = keys.filterNot(k ⇒ cells.exists(_.key == k)).map(k ⇒ Cell(k, JNull))(breakOut)
+    val fakeValues: Array[Cell] = keys.collect {
+      case k if !cells.exists(_.key == k) ⇒ Cell(k, JNull)
+    }(breakOut)
     val correctValues: Array[Cell] = cells.filter(c ⇒ keys.contains(c.key))
     correctValues ++: fakeValues
   }
 
-  def loopOverKeys(values: Map[String, JValue], key: Key = Key.emptyKey): Array[Cell] = {
+  // use initial mutable map from Jawn to avoid allocations
+  def loopOverKeys(values: collection.mutable.Map[String, JValue], key: Key = Key.emptyKey): Array[Cell] = {
     val arrays: Array[Array[Cell]] = values.map {
       case (k, v) ⇒ jValueMatcher(v, key.addSegment(k))
     }(breakOut)
@@ -60,7 +69,7 @@ private object Converter {
       case j @ DeferLong(_) ⇒ Array(Cell(key, j))
       case j @ JTrue        ⇒ Array(Cell(key, j))
       case j @ JFalse       ⇒ Array(Cell(key, j))
-      case JObject(jvalue)  ⇒ loopOverKeys(jvalue.toMap, key)
+      case JObject(jvalue)  ⇒ loopOverKeys(jvalue, key)
       case JArray(jvalues) ⇒
         if (jvalues.isEmpty)
           Array(Cell(key, JNull))
@@ -77,9 +86,9 @@ private object Converter {
       case DoubleNum(jvalue) ⇒ jvalue.toString
       case DeferNum(jvalue)  ⇒ jvalue.toString
       case DeferLong(jvalue) ⇒ jvalue.toString
-      case JTrue             ⇒ "true"
-      case JFalse            ⇒ "false"
-      case _                 ⇒ ""
+      case JTrue             ⇒ trueStr
+      case JFalse            ⇒ falseStr
+      case _                 ⇒ emptyStr
     }.mkString(", ")
     JString(r)
   }
@@ -91,28 +100,36 @@ private object Converter {
     }
 
   def writeRows(values: Array[Cell], csvWriter: CSVWriter): Long = {
-    val groupedValues = values.groupBy(_.key.physicalHeader)
+    val grouped = values.groupBy(_.key.physicalHeader)
+    val groupedValues = grouped.values
 
-    if (groupedValues.values.isEmpty)
+    if (groupedValues.isEmpty)
       0
     else {
-      val rowsNbToWrite = groupedValues.values.maxBy(_.length).length
-      val sortedRows: Array[(String, Array[Cell])] = groupedValues.toArray.sortBy(_._1)
-
-      for (i ← 0 until rowsNbToWrite) {
-        val row: Array[JValue] = sortedRows.map {
-          case (_, vs) ⇒ vs.lift(i).map(_.value).getOrElse(JNull)
+      val rowsNbToWrite = groupedValues.maxBy(_.length).length
+      val sortedRows: Array[(String, Array[Cell])] = grouped.toArray.sortBy(_._1)
+      var rowIndex = 0
+      while (rowIndex < rowsNbToWrite) {
+        val row: Array[String] = sortedRows.map {
+          case (_, vs) ⇒
+            // Don't use Array.lift to avoid allocating an Option
+            val json = try { vs.apply(rowIndex).value } catch { case _: ArrayIndexOutOfBoundsException ⇒ JNull }
+            render(json)
         }
-
-        csvWriter.writeRow(row.map(render))
+        csvWriter.writeRow(row)
         csvWriter.flush()
+        rowIndex += 1
       }
       rowsNbToWrite
     }
   }
 
   //https://github.com/non/jawn/issues/13
-  def render(v: JValue): String = v.render(jawn.ast.FastRenderer).trim.replace("null", "").replace("[]", "")
+  def render(v: JValue): String =
+    v.render(jawn.ast.FastRenderer)
+      .trim
+      .replace(nullStr, emptyStr)
+      .replace(emptyArrayStr, emptyStr)
 
   @tailrec
   def consume(st: Stream[String], p: jawn.AsyncParser[JValue], w: CSVWriter, progress: Progress = Progress()): Either[Exception, Progress] =
@@ -123,8 +140,8 @@ private object Converter {
         p.absorb(s) match {
           case Right(jsSeq) ⇒
             processJValues(progress, jsSeq, w) match {
-              case Right(acc) ⇒ consume(tail, p, w, acc)
-              case Left(e)    ⇒ Left(e)
+              case Right(acc)  ⇒ consume(tail, p, w, acc)
+              case l @ Left(_) ⇒ l
             }
           case Left(e) ⇒ Left(e)
         }
@@ -166,7 +183,6 @@ case class Key(segments: Vector[String]) {
 object Key {
   val nestedColumnSeparator = "."
   val emptyKey = Key(Vector())
-  def fromPhysicalKey(pKey: String) = Key(pKey.split(nestedColumnSeparator).toVector)
   implicit val orderingByPhysicalHeader: Ordering[Key] = Ordering.by(k ⇒ k.physicalHeader)
 }
 
