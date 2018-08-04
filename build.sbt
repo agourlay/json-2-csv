@@ -56,7 +56,7 @@ ScalariformKeys.preferences :=
 libraryDependencies ++= {
   val commonsIoV = "2.6"
   val scalaTestV = "3.0.5"
-  val jawnV      = "0.12.1"
+  val jawnV      = "0.13.0"
   val scalaCsvV  = "1.3.5"
   Seq(
      "org.spire-math"       %% "jawn-ast"   % jawnV
