@@ -20,7 +20,7 @@ object Json2Csv {
   def convert(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Either[Exception, Long] = {
     val csvWriter = CSVWriter.open(resultOutputStream)(jsonCSVFormat)
     val parser = jawn.Parser.async[JValue](mode = AsyncParser.UnwrapArray)
-    val finalProgress = Converter.consume(chunks, parser, csvWriter)
+    val finalProgress = Converter.consume(chunks, parser, csvWriter)(Progress.empty)
     csvWriter.close()
     finalProgress.map(_.rowCount)
   }
