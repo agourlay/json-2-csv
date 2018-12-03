@@ -36,9 +36,8 @@ private object Converter {
       Left(new RuntimeException(s"Found a non JSON object - $j"))
   }
 
-  def writeHeaders(headers: SortedSet[Key], csvWriter: CSVWriter) {
+  def writeHeaders(headers: SortedSet[Key], csvWriter: CSVWriter): Unit =
     csvWriter.writeRow(headers.map(_.physicalHeader)(breakOut))
-  }
 
   def reconcileValues(keys: SortedSet[Key], cells: Array[Cell]): Array[Cell] = {
     val fakeValues: Array[Cell] = keys.collect {
@@ -172,14 +171,14 @@ object Progress {
   def append(a: Progress, b: Progress): Progress = a.copy(a.keysSeen ++ b.keysSeen, a.rowCount + b.rowCount)
 }
 
-case class Key(segments: Vector[String]) {
-  val physicalHeader = segments.mkString(Key.nestedColumnSeparator)
-  def addSegment(other: String) = copy(segments :+ other)
+case class Key(revertedSegments: List[String]) {
+  val physicalHeader = revertedSegments.reverse.mkString(Key.nestedColumnSeparator)
+  def addSegment(other: String) = copy(other :: revertedSegments)
 }
 
 object Key {
   val nestedColumnSeparator = "."
-  val emptyKey = Key(Vector.empty)
+  val emptyKey = Key(Nil)
   implicit val orderingByPhysicalHeader: Ordering[Key] = Ordering.by(_.physicalHeader)
 }
 
