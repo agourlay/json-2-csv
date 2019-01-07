@@ -3,9 +3,9 @@ package com.github.agourlay.json2Csv
 import java.io.{ File, FileNotFoundException, OutputStream }
 
 import com.github.tototoshi.csv.{ CSVFormat, CSVWriter, QUOTE_NONE, Quoting }
-import jawn.AsyncParser
-import jawn.ast.JParser._
-import jawn.ast.JValue
+import org.typelevel.jawn.{ AsyncParser, Parser }
+import org.typelevel.jawn.ast.JParser._
+import org.typelevel.jawn.ast.JValue
 
 import scala.io.Source
 
@@ -19,7 +19,7 @@ object Json2Csv {
 
   def convert(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Either[Exception, Long] = {
     val csvWriter = CSVWriter.open(resultOutputStream)(jsonCSVFormat)
-    val parser = jawn.Parser.async[JValue](mode = AsyncParser.UnwrapArray)
+    val parser = Parser.async[JValue](mode = AsyncParser.UnwrapArray)
     val finalProgress = Converter.consume(chunks, parser, csvWriter)(Progress.empty)
     csvWriter.close()
     finalProgress.map(_.rowCount)

@@ -28,7 +28,7 @@ publishTo := Some(
   else
     "releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2")
 
-scalaVersion := "2.12.7"
+scalaVersion := "2.12.8"
 
 scalacOptions := Seq(
   "-unchecked",
@@ -56,10 +56,10 @@ ScalariformKeys.preferences :=
 libraryDependencies ++= {
   val commonsIoV = "2.6"
   val scalaTestV = "3.0.5"
-  val jawnV      = "0.13.0"
+  val jawnV      = "0.14.1"
   val scalaCsvV  = "1.3.5"
   Seq(
-     "org.spire-math"       %% "jawn-ast"   % jawnV
+     "org.typelevel"        %% "jawn-ast"   % jawnV
     ,"com.github.tototoshi" %% "scala-csv"  % scalaCsvV
     ,"commons-io"           %  "commons-io" % commonsIoV % "test"
     ,"org.scalatest"        %% "scalatest"  % scalaTestV % "test"
