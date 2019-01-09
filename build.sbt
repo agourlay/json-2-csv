@@ -15,7 +15,6 @@ scmInfo := Some(ScmInfo(
 
 // Publishing
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
-pgpPassphrase := sys.env.get("PGP_PASS").map(_.toCharArray)
 publishMavenStyle := true
 publishArtifact in Test := false
 pomIncludeRepository := (_ => false)
