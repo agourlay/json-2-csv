@@ -15,8 +15,6 @@ scmInfo := Some(ScmInfo(
 
 // Publishing
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
-pgpSecretRing := file("/Users/agourlay/.pgpKeys/agourlay-privkey.gpg")
-pgpPublicRing := file("/Users/agourlay/.pgpKeys/agourlay-pubkey.gpg")
 pgpPassphrase := sys.env.get("PGP_PASS").map(_.toCharArray)
 publishMavenStyle := true
 publishArtifact in Test := false
