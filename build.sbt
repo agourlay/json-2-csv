@@ -51,7 +51,7 @@ ScalariformKeys.preferences :=
 
 libraryDependencies ++= {
   val commonsIoV = "2.6"
-  val scalaTestV = "3.0.5"
+  val scalaTestV = "3.0.6"
   val jawnV      = "0.14.1"
   val scalaCsvV  = "1.3.5"
   Seq(
