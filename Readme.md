@@ -28,7 +28,7 @@ Two methods on the `Json2Csv` object returning an `Either` of the number of CSV 
 ```scala
 def convert(file: File, resultOutputStream: OutputStream): Either[Exception, Long]
 
-def convert(chunks: ⇒ Stream[String], resultOutputStream: OutputStream): Either[Exception, Long]
+def convert(chunks: ⇒ LazyList[String], resultOutputStream: OutputStream): Either[Exception, Long]
 ```
 
 ## Usage example
@@ -52,7 +52,7 @@ object Boot {
 
 ``` scala
 libraryDependencies ++= Seq(
-  "com.github.agourlay" %% "json-2-csv" % "0.4.2",
+  "com.github.agourlay" %% "json-2-csv" % "0.5.0",
   ...
 )
 ```
