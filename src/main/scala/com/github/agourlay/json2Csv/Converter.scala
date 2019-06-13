@@ -9,7 +9,7 @@ import org.typelevel.jawn.ast._
 
 import scala.annotation.tailrec
 import scala.collection.SortedSet
-import scala.collection.breakOut
+import scala.collection.immutable.ArraySeq
 
 private object Converter {
 
@@ -21,7 +21,7 @@ private object Converter {
   private val emptyArrayStr = Pattern.compile(Pattern.quote("[]"))
 
   def processJValue(j: JValue, progress: Progress, csvWriter: CSVWriter): Either[Exception, Progress] = j match {
-    case JObject(fields) ⇒
+    case JObject(fields) =>
       val cells = loopOverKeys(fields, Key.emptyKey)
       // First element should contain complete schema
       val newKeys = {
@@ -30,22 +30,22 @@ private object Converter {
       }
 
       // Write headers if necessary
-      if (progress.rowCount == 0) csvWriter.writeRow(newKeys.map(_.physicalHeader)(breakOut))
+      if (progress.rowCount == 0) csvWriter.writeRow(newKeys.view.map(_.physicalHeader).to(Seq))
 
       // Write rows
       val rowsNbWritten = writeRows(reconcileValues(newKeys, cells), csvWriter)
 
       Right(Progress(newKeys, rowsNbWritten))
 
-    case _ ⇒
+    case _ =>
       Left(new IllegalArgumentException(s"Found a non JSON object - $j"))
   }
 
   def reconcileValues(keys: SortedSet[Key], cells: Array[Cell]): Array[Cell] = {
-    val fakeValues: Array[Cell] = keys.collect {
-      case k if !cells.exists(_.key.physicalHeader == k.physicalHeader) ⇒ Cell(k, JNull)
-    }(breakOut)
-    val correctValues: Array[Cell] = cells.filter(c ⇒ keys.contains(c.key))
+    val fakeValues: Array[Cell] = keys.view.collect {
+      case k if !cells.exists(_.key.physicalHeader == k.physicalHeader) => Cell(k, JNull)
+    }.to(Array)
+    val correctValues: Array[Cell] = cells.filter(c => keys.contains(c.key))
     if (fakeValues.isEmpty)
       correctValues
     else
@@ -54,9 +54,9 @@ private object Converter {
 
   // use initial mutable map from Jawn to avoid allocations
   def loopOverKeys(fields: collection.mutable.Map[String, JValue], key: Key): Array[Cell] =
-    fields.flatMap {
-      case (k, v) ⇒ jValueMatcher(key.addSegment(k))(v)
-    }(breakOut)
+    fields.toArray.flatMap {
+      case (k, v) => jValueMatcher(key.addSegment(k))(v)
+    }
 
   def arrayOneCell(key: Key, value: JValue): Array[Cell] = {
     val array = Array.ofDim[Cell](1)
@@ -66,9 +66,9 @@ private object Converter {
 
   def jValueMatcher(key: Key)(value: JValue): Array[Cell] =
     value match {
-      case JObject(fields) ⇒
+      case JObject(fields) =>
         loopOverKeys(fields, key)
-      case JArray(values) ⇒
+      case JArray(values) =>
         if (values.isEmpty)
           arrayOneCell(key, JNull)
         else if (isJArrayOfValues(values))
@@ -76,28 +76,28 @@ private object Converter {
         else
           // recurse over JArray's values
           values.flatMap(jValueMatcher(key))
-      case _ ⇒
+      case _ =>
         arrayOneCell(key, value)
     }
 
   def mergeJValue(values: Array[JValue]): JValue =
     JString {
       values.map {
-        case JString(jvalue)   ⇒ jvalue
-        case LongNum(jvalue)   ⇒ jvalue.toString
-        case DoubleNum(jvalue) ⇒ jvalue.toString
-        case DeferNum(jvalue)  ⇒ jvalue.toString
-        case DeferLong(jvalue) ⇒ jvalue.toString
-        case JTrue             ⇒ trueStr
-        case JFalse            ⇒ falseStr
-        case _                 ⇒ emptyStr
+        case JString(jvalue)   => jvalue
+        case LongNum(jvalue)   => jvalue.toString
+        case DoubleNum(jvalue) => jvalue.toString
+        case DeferNum(jvalue)  => jvalue.toString
+        case DeferLong(jvalue) => jvalue.toString
+        case JTrue             => trueStr
+        case JFalse            => falseStr
+        case _                 => emptyStr
       }.mkString(", ")
     }
 
   def isJArrayOfValues(vs: Array[JValue]): Boolean =
     vs.forall {
-      case JNull | JString(_) | LongNum(_) | DoubleNum(_) | DeferNum(_) | JTrue | JFalse ⇒ true
-      case _                                                                             ⇒ false
+      case JNull | JString(_) | LongNum(_) | DoubleNum(_) | DeferNum(_) | JTrue | JFalse => true
+      case _                                                                             => false
     }
 
   def writeRows(values: Array[Cell], csvWriter: CSVWriter): Long = {
@@ -107,12 +107,12 @@ private object Converter {
     var rowIndex = 0
     while (rowIndex < rowsNbToWrite) {
       val row: Array[String] = sortedRows.map {
-        case (_, vs) ⇒
+        case (_, vs) =>
           // Don't use Array.lift to avoid allocating an Option
           val json = if (rowIndex < vs.length) vs.apply(rowIndex).value else JNull
           render(json)
       }
-      csvWriter.writeRow(row)
+      csvWriter.writeRow(ArraySeq.unsafeWrapArray(row))
       csvWriter.flush()
       rowIndex += 1
     }
@@ -128,31 +128,31 @@ private object Converter {
   }
 
   @tailrec
-  def consume(st: Stream[String], p: AsyncParser[JValue], w: CSVWriter)(progress: Progress): Either[Exception, Progress] =
+  def consume(st: LazyList[String], p: AsyncParser[JValue], w: CSVWriter)(progress: Progress): Either[Exception, Progress] =
     st match {
-      case Stream.Empty ⇒
-        p.finish().flatMap(jsSeq ⇒ processJValues(progress, jsSeq, w))
-      case s #:: tail ⇒
+      case s #:: tail =>
         p.absorb(s) match {
-          case Right(jsSeq) ⇒
+          case Right(jsSeq) =>
             processJValues(progress, jsSeq, w) match {
-              case Right(acc)  ⇒ consume(tail, p, w)(acc)
-              case l @ Left(_) ⇒ l
+              case Right(acc)  => consume(tail, p, w)(acc)
+              case l @ Left(_) => l
             }
-          case Left(e) ⇒ Left(e)
+          case Left(e) => Left(e)
         }
+      case _ =>
+        p.finish().flatMap(jsSeq => processJValues(progress, jsSeq, w))
     }
 
-  def processJValues(initProgress: Progress, jvalues: Seq[JValue], w: CSVWriter): Either[Exception, Progress] = {
-    def ghettoFoldMapTraverse[A, B](seq: Seq[A], init: B, merger: (B, B) ⇒ B)(f: (B, A) ⇒ Either[Exception, B]): Either[Exception, B] =
+  def processJValues(initProgress: Progress, jvalues: collection.Seq[JValue], w: CSVWriter): Either[Exception, Progress] = {
+    def ghettoFoldMapTraverse[A, B](seq: collection.Seq[A], init: B, merger: (B, B) => B)(f: (B, A) => Either[Exception, B]): Either[Exception, B] =
       seq.foldLeft[Either[Exception, B]](Right(init)) {
-        case (eitherAcc, n) ⇒
-          eitherAcc.flatMap { acc ⇒
+        case (eitherAcc, n) =>
+          eitherAcc.flatMap { acc =>
             f(acc, n).map(merger(acc, _))
           }
       }
 
-    ghettoFoldMapTraverse(jvalues, initProgress, Progress.append)((a, b) ⇒ processJValue(b, a, w))
+    ghettoFoldMapTraverse(jvalues, initProgress, Progress.append)((a, b) => processJValue(b, a, w))
   }
 
 }

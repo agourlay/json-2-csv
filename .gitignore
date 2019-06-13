@@ -24,3 +24,5 @@ project/plugins/project/
 *.sublime-project
 *.sublime-workspace
 *.jfr
+.bloop
+.metals
