@@ -18,18 +18,18 @@ class ConverterPerfSpec extends WordSpec with Matchers {
   }
 
   // Helper to stressTest memory.
-  def stressMemoryTestBuilder(n: Int) {
+  def stressMemoryTestBuilder(n: Int) = {
     // test.json containing 3 objects.
     Json2Csv.convert(repeatTestFileContent(n / 3), new NullOutputStream())
     assert(true) // Not blowing up here means success.
   }
 
   // Helper to build Stream[String] from the test.json containing 3 objects.
-  def repeatTestFileContent(n: Int): Stream[String] = {
+  def repeatTestFileContent(n: Int): LazyList[String] = {
     val resultFile = new File(getClass.getResource("/test.json").getPath)
     // remove "[]"
     val twoJsons = FileUtils.readFileToString(resultFile, Charset.defaultCharset).drop(1).dropRight(1)
-    "[" #:: Stream.continually[String](twoJsons + ",").take(n - 1)
+    "[" #:: LazyList.continually[String](twoJsons + ",").take(n - 1)
     // The stream does not end properly with json,json] but the goal here is to test memory and not the parsing itself.
     // For proper ending add :+ twoJsons :+ ("]") but it adds memoization to the Stream.
   }

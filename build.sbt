@@ -24,7 +24,7 @@ publishTo := Some(
   else
     "releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2")
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.13.0"
 
 scalacOptions := Seq(
   "-unchecked",
@@ -34,7 +34,7 @@ scalacOptions := Seq(
   "-language:implicitConversions",
   "-language:postfixOps",
   "-feature",
-  "-Ywarn-unused-import"
+  "-Ywarn-unused:imports"
 )
 
 fork in Test := true
@@ -46,7 +46,6 @@ ScalariformKeys.preferences :=
     .setPreference(AlignSingleLineCaseStatements, true)
     .setPreference(AlignSingleLineCaseStatements.MaxArrowIndent, 100)
     .setPreference(DoubleIndentConstructorArguments, true)
-    .setPreference(RewriteArrowSymbols, true)
     .setPreference(DanglingCloseParenthesis, Preserve)
 
 libraryDependencies ++= {
