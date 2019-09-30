@@ -5,12 +5,12 @@ import java.nio.charset.Charset
 
 import com.github.agourlay.json2Csv._
 import org.apache.commons.io.FileUtils
-import org.scalatest.{ Matchers, WordSpec }
+import utest._
 
-class ConverterAcceptanceSpec extends WordSpec with Matchers {
+object ConverterAcceptanceSpec extends TestSuite {
 
-  "The converter" must {
-    "transform properly the nominal case" in {
+  val tests = Tests {
+    test("transform properly the nominal case") {
       val inputFile = new File(getClass.getResource("/test.json").getPath)
       val outputName = "delete.csv"
       val resultOutputStream = new FileOutputStream(outputName)
@@ -21,7 +21,7 @@ class ConverterAcceptanceSpec extends WordSpec with Matchers {
       FileUtils.forceDelete(resultFile)
 
       val referenceResultFile = new File(getClass.getResource("/test-json.csv").getPath)
-      resultFileContent shouldEqual FileUtils.readFileToString(referenceResultFile, Charset.defaultCharset)
+      assert(resultFileContent == FileUtils.readFileToString(referenceResultFile, Charset.defaultCharset))
     }
   }
 }

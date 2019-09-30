@@ -6,13 +6,13 @@ import java.nio.charset.Charset
 import com.github.agourlay.json2Csv._
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.output.NullOutputStream
-import org.scalatest.{ Matchers, WordSpec }
+import utest._
 
-class ConverterPerfSpec extends WordSpec with Matchers {
+object ConverterPerfSpec extends TestSuite {
 
   // test heap size options in build.sbt
-  "The converter within 1 Gb heap" must {
-    "convert a stream of 3.000.000 JSON elements" in {
+  val tests = Tests {
+    test("convert a stream of 3.000.000 JSON elements within 1GB") {
       stressMemoryTestBuilder(3000000)
     }
   }

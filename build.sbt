@@ -41,6 +41,8 @@ fork in Test := true
 
 javaOptions in Test ++= Seq("-Xmx1G")
 
+testFrameworks += new TestFramework("utest.runner.Framework")
+
 ScalariformKeys.preferences :=
   scalariformPreferences.value
     .setPreference(AlignSingleLineCaseStatements, true)
@@ -50,13 +52,13 @@ ScalariformKeys.preferences :=
 
 libraryDependencies ++= {
   val commonsIoV = "2.6"
-  val scalaTestV = "3.0.8"
+  val utestV     = "0.7.1"
   val jawnV      = "0.14.2"
   val scalaCsvV  = "1.3.6"
   Seq(
      "org.typelevel"        %% "jawn-ast"   % jawnV
     ,"com.github.tototoshi" %% "scala-csv"  % scalaCsvV
-    ,"commons-io"           %  "commons-io" % commonsIoV % "test"
-    ,"org.scalatest"        %% "scalatest"  % scalaTestV % "test"
+    ,"commons-io"           %  "commons-io" % commonsIoV % Test
+    ,"com.lihaoyi"          %% "utest"      % utestV     % Test
   )
 }
