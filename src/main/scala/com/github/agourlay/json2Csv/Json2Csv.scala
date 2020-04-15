@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets
 
 import com.github.tototoshi.csv.{ CSVFormat, CSVWriter, QUOTE_NONE, Quoting }
 import org.typelevel.jawn.{ AsyncParser, Parser }
-import org.typelevel.jawn.ast.JParser._
 import org.typelevel.jawn.ast.JValue
 
 import scala.io.Source
