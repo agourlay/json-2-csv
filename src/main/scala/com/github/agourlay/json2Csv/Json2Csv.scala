@@ -25,7 +25,7 @@ object Json2Csv {
   def convert(chunks: => LazyList[String], resultOutputStream: OutputStream): Either[Exception, Long] = {
     val csvWriter = CSVWriter.open(resultOutputStream)(jsonCSVFormat)
     val parser = Parser.async[JValue](mode = AsyncParser.UnwrapArray)
-    val finalProgress = Converter.consume(chunks, parser, csvWriter)(Progress.empty)
+    val finalProgress = Converter.consumeStream(chunks, parser, csvWriter)(Progress.empty)
     csvWriter.close()
     finalProgress.map(_.rowCount)
   }

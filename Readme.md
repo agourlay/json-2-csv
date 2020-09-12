@@ -5,8 +5,8 @@ A library transforming JSON collections into CSV files.
 
 ## Features
 
-- ingests JSON collections from a `File` or from a `Stream[String]`.
-- nested JSON objects are turned into extra CSV columns and lines.
+- ingests JSON collections from a `File` or from a `LazyList[String]`.
+- turns nested JSON objects into extra CSV columns and lines.
 - works in a streaming fashion with a small memory footprint.
 
 ## Limitations

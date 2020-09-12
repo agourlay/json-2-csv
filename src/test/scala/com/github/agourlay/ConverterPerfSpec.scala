@@ -13,15 +13,20 @@ object ConverterPerfSpec extends TestSuite {
   // test heap size options in build.sbt
   val tests = Tests {
     test("convert a stream of 3.000.000 JSON elements within 1GB") {
-      stressMemoryTestBuilder(3000000)
+      stressMemoryTestBuilder(3000000) match {
+        case Left(e) =>
+          println(s"failed with $e")
+          assert(false)
+        case Right(count) =>
+          assert(count == 4999995)
+      }
     }
   }
 
   // Helper to stressTest memory.
-  def stressMemoryTestBuilder(n: Int) = {
+  def stressMemoryTestBuilder(n: Int): Either[Exception, Long] = {
     // test.json containing 3 objects.
-    Json2Csv.convert(repeatTestFileContent(n / 3), new NullOutputStream())
-    assert(true) // Not blowing up here means success.
+    Json2Csv.convert(repeatTestFileContent(n / 3), NullOutputStream.NULL_OUTPUT_STREAM)
   }
 
   // Helper to build Stream[String] from the test.json containing 3 objects.

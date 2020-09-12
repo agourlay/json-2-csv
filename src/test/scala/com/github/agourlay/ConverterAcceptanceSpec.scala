@@ -21,7 +21,8 @@ object ConverterAcceptanceSpec extends TestSuite {
       FileUtils.forceDelete(resultFile)
 
       val referenceResultFile = new File(getClass.getResource("/test-json.csv").getPath)
-      assert(resultFileContent == FileUtils.readFileToString(referenceResultFile, Charset.defaultCharset))
+      val referenceResultContent = FileUtils.readFileToString(referenceResultFile, Charset.defaultCharset)
+      assert(resultFileContent == referenceResultContent)
     }
   }
 }

@@ -1,15 +1,11 @@
 package com.github.agourlay.json2Csv
 
-import java.util.regex.Pattern
-
 import com.github.tototoshi.csv.CSVWriter
 import org.typelevel.jawn.AsyncParser
 import org.typelevel.jawn.ast.JParser._
 import org.typelevel.jawn.ast._
 
 import scala.annotation.tailrec
-import scala.collection.SortedSet
-import scala.collection.immutable.ArraySeq
 
 private object Converter {
 
@@ -17,35 +13,32 @@ private object Converter {
   private val falseStr = "false"
   private val emptyStr = ""
 
-  private val nullStr = Pattern.compile("null")
-  private val emptyArrayStr = Pattern.compile(Pattern.quote("[]"))
-
   def processJValue(j: JValue, progress: Progress, csvWriter: CSVWriter): Either[Exception, Progress] = j match {
     case JObject(fields) =>
-      val cells = loopOverKeys(fields, Key.emptyKey)
-      // First element should contain complete schema
-      val newKeys = {
-        if (progress.keysSeen.isEmpty) progress.keysSeen ++ cells.map(_.key)
-        else progress.keysSeen
-      }
-
+      val cells = loopOverKeys(fields, Key.emptyKey).toArray
       // Write headers if necessary
-      if (progress.rowCount == 0) csvWriter.writeRow(newKeys.view.map(_.physicalHeader).to(Seq))
-
-      // Write rows
-      val rowsNbWritten = writeRows(reconcileValues(newKeys, cells), csvWriter)
-
-      Right(Progress(newKeys, rowsNbWritten))
+      if (progress.rowCount == 0) {
+        val newKeys = cells.iterator.map(_.key).toSet
+        val headers = newKeys.iterator.map(_.physicalHeader).toSeq.sorted
+        csvWriter.writeRow(headers)
+        val rowsNbWritten = writeCells(cells, csvWriter)
+        Right(Progress(newKeys, rowsNbWritten))
+      } else {
+        // Missing column will be faked as the first element should contain the complete schema
+        val reconciledCells = reconcileValues(progress.keysSeen, cells)
+        val rowsNbWritten = writeCells(reconciledCells, csvWriter)
+        Right(Progress(progress.keysSeen, progress.rowCount + rowsNbWritten))
+      }
 
     case _ =>
       Left(new IllegalArgumentException(s"Found a non JSON object - $j"))
   }
 
-  def reconcileValues(keys: SortedSet[Key], cells: Array[Cell]): Array[Cell] = {
-    val fakeValues: Array[Cell] = keys.view.collect {
+  def reconcileValues(knownKeys: Set[Key], cells: Array[Cell]): Array[Cell] = {
+    val fakeValues = knownKeys.iterator.collect {
       case k if !cells.exists(_.key.physicalHeader == k.physicalHeader) => Cell(k, JNull)
-    }.to(Array)
-    val correctValues: Array[Cell] = cells.filter(c => keys.contains(c.key))
+    }.toArray
+    val correctValues = cells.filter(c => knownKeys.contains(c.key))
     if (fakeValues.isEmpty)
       correctValues
     else
@@ -53,41 +46,37 @@ private object Converter {
   }
 
   // use initial mutable map from Jawn to avoid allocations
-  def loopOverKeys(fields: collection.mutable.Map[String, JValue], key: Key): Array[Cell] =
-    fields.toArray.flatMap {
+  def loopOverKeys(fields: collection.mutable.Map[String, JValue], key: Key): Iterator[Cell] =
+    fields.iterator.flatMap {
       case (k, v) => jValueMatcher(key.addSegment(k))(v)
     }
 
-  def arrayOneCell(key: Key, value: JValue): Array[Cell] = {
-    val array = Array.ofDim[Cell](1)
-    array(0) = Cell(key, value)
-    array
-  }
+  def iteratorOneCell(key: Key, value: JValue): Iterator[Cell] = Iterator.single(Cell(key, value))
 
-  def jValueMatcher(key: Key)(value: JValue): Array[Cell] =
+  def jValueMatcher(key: Key)(value: JValue): Iterator[Cell] =
     value match {
       case JObject(fields) =>
         loopOverKeys(fields, key)
       case JArray(values) =>
         if (values.isEmpty)
-          arrayOneCell(key, JNull)
+          iteratorOneCell(key, JNull)
         else if (isJArrayOfValues(values))
-          arrayOneCell(key, mergeJValue(values))
+          iteratorOneCell(key, mergeJValue(values))
         else
           // recurse over JArray's values
-          values.flatMap(jValueMatcher(key))
+          values.iterator.flatMap(jValueMatcher(key))
       case _ =>
-        arrayOneCell(key, value)
+        iteratorOneCell(key, value)
     }
 
   def mergeJValue(values: Array[JValue]): JValue =
     JString {
-      values.map {
+      values.iterator.map {
         case JString(jvalue)   => jvalue
         case LongNum(jvalue)   => jvalue.toString
         case DoubleNum(jvalue) => jvalue.toString
-        case DeferNum(jvalue)  => jvalue.toString
-        case DeferLong(jvalue) => jvalue.toString
+        case DeferNum(jvalue)  => jvalue
+        case DeferLong(jvalue) => jvalue
         case JTrue             => trueStr
         case JFalse            => falseStr
         case _                 => emptyStr
@@ -100,41 +89,39 @@ private object Converter {
       case _                                                                             => false
     }
 
-  def writeRows(values: Array[Cell], csvWriter: CSVWriter): Long = {
-    val groupedArray: Array[(String, Array[Cell])] = values.groupBy(_.key.physicalHeader).toArray
+  def writeCells(values: Array[Cell], csvWriter: CSVWriter): Long = {
+    val groupedArray: Seq[(String, Array[Cell])] = values.groupBy(_.key.physicalHeader).toSeq
     val rowsNbToWrite = groupedArray.maxBy(_._2.length)._2.length
     val sortedRows = groupedArray.sortBy(_._1)
     var rowIndex = 0
     while (rowIndex < rowsNbToWrite) {
-      val row: Array[String] = sortedRows.map {
+      val row = sortedRows.map {
         case (_, vs) =>
           // Don't use Array.lift to avoid allocating an Option
           val json = if (rowIndex < vs.length) vs.apply(rowIndex).value else JNull
           render(json)
       }
-      csvWriter.writeRow(ArraySeq.unsafeWrapArray(row))
-      csvWriter.flush()
+      csvWriter.writeRow(row) //auto-flush
       rowIndex += 1
     }
     rowsNbToWrite
   }
 
   //https://github.com/typelevel/jawn/issues/13
-  def render(v: JValue): String = {
-    val r = v.render(FastRenderer)
-    val r1 = nullStr.matcher(r).replaceAll(emptyStr)
-    val r2 = emptyArrayStr.matcher(r1).replaceAll(emptyStr)
-    r2
+  def render(v: JValue): String = v match {
+    case JArray(values) if values.isEmpty => emptyStr
+    case JNull                            => emptyStr
+    case _                                => v.render(FastRenderer)
   }
 
   @tailrec
-  def consume(st: LazyList[String], p: AsyncParser[JValue], w: CSVWriter)(progress: Progress): Either[Exception, Progress] =
+  def consumeStream(st: LazyList[String], p: AsyncParser[JValue], w: CSVWriter)(progress: Progress): Either[Exception, Progress] =
     st match {
       case s #:: tail =>
         p.absorb(s) match {
           case Right(jsSeq) =>
             processJValues(progress, jsSeq, w) match {
-              case Right(acc)  => consume(tail, p, w)(acc)
+              case Right(acc)  => consumeStream(tail, p, w)(acc)
               case l @ Left(_) => l
             }
           case Left(e) => Left(e)
@@ -143,36 +130,26 @@ private object Converter {
         p.finish().flatMap(jsSeq => processJValues(progress, jsSeq, w))
     }
 
-  def processJValues(initProgress: Progress, jvalues: collection.Seq[JValue], w: CSVWriter): Either[Exception, Progress] = {
-    def ghettoFoldMapTraverse[A, B](seq: collection.Seq[A], init: B, merger: (B, B) => B)(f: (B, A) => Either[Exception, B]): Either[Exception, B] =
-      seq.foldLeft[Either[Exception, B]](Right(init)) {
-        case (eitherAcc, n) =>
-          eitherAcc.flatMap { acc =>
-            f(acc, n).map(merger(acc, _))
-          }
-      }
-
-    ghettoFoldMapTraverse(jvalues, initProgress, Progress.append)((a, b) => processJValue(b, a, w))
-  }
-
+  def processJValues(initProgress: Progress, jValues: collection.Seq[JValue], w: CSVWriter): Either[Exception, Progress] =
+    jValues.foldLeft[Either[Exception, Progress]](Right(initProgress)) {
+      case (eitherAcc, n) => eitherAcc.flatMap { acc => processJValue(n, acc, w) }
+    }
 }
 
-case class Progress(keysSeen: SortedSet[Key], rowCount: Long)
+case class Progress(keysSeen: Set[Key], rowCount: Long)
 
 object Progress {
-  val empty = Progress(SortedSet.empty[Key], 0L)
-  def append(a: Progress, b: Progress): Progress = Progress(a.keysSeen ++ b.keysSeen, a.rowCount + b.rowCount)
+  val empty: Progress = Progress(Set.empty[Key], 0L)
 }
 
 case class Key(revertedSegments: List[String]) {
-  val physicalHeader: String = revertedSegments.reverse.mkString(Key.nestedColumnSeparator)
+  val physicalHeader: String = revertedSegments.reverseIterator.mkString(Key.nestedColumnSeparator)
   def addSegment(other: String): Key = copy(other :: revertedSegments)
 }
 
 object Key {
   private val nestedColumnSeparator = "."
-  val emptyKey = Key(Nil)
-  implicit val orderingByPhysicalHeader: Ordering[Key] = Ordering.by(_.physicalHeader)
+  val emptyKey: Key = Key(Nil)
 }
 
 case class Cell(key: Key, value: JValue)
