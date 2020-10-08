@@ -26,3 +26,4 @@ project/plugins/project/
 *.jfr
 .bloop
 .metals
+.bsp
