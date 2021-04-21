@@ -16,7 +16,7 @@ scmInfo := Some(ScmInfo(
 // Publishing
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
 publishMavenStyle := true
-publishArtifact in Test := false
+Test / publishArtifact := false
 pomIncludeRepository := (_ => false)
 publishTo := Some(
   if (version.value.trim.endsWith("SNAPSHOT"))
@@ -37,9 +37,9 @@ scalacOptions := Seq(
   "-Ywarn-unused:imports"
 )
 
-fork in Test := true
+Test / fork := true
 
-javaOptions in Test ++= Seq("-Xmx1G")
+Test / javaOptions  ++= Seq("-Xmx1G")
 
 testFrameworks += new TestFramework("utest.runner.Framework")
 
