@@ -54,7 +54,7 @@ libraryDependencies ++= {
   val commonsIoV = "2.8.0"
   val utestV     = "0.7.10"
   val jawnV      = "1.1.2"
-  val scalaCsvV  = "1.3.7"
+  val scalaCsvV  = "1.3.8"
   Seq(
      "org.typelevel"        %% "jawn-ast"   % jawnV
     ,"com.github.tototoshi" %% "scala-csv"  % scalaCsvV
