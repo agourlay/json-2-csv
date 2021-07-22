@@ -34,7 +34,8 @@ object ConverterPerfSpec extends TestSuite {
     val resultFile = new File(getClass.getResource("/test.json").getPath)
     // remove "[]"
     val twoJsons = FileUtils.readFileToString(resultFile, Charset.defaultCharset).drop(1).dropRight(1)
-    "[" #:: LazyList.continually[String](twoJsons + ",").take(n - 1)
+    val elem = twoJsons + ","
+    "[" #:: LazyList.fill(n - 1)(elem)
     // The stream does not end properly with json,json] but the goal here is to test memory and not the parsing itself.
     // For proper ending add :+ twoJsons :+ ("]") but it adds memoization to the Stream.
   }
