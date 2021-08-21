@@ -6,20 +6,16 @@ import java.nio.charset.Charset
 import com.github.agourlay.json2Csv._
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.output.NullOutputStream
-import utest._
 
-object ConverterPerfSpec extends TestSuite {
+class ConverterPerfSpec extends munit.FunSuite {
 
   // test heap size options in build.sbt
-  val tests = Tests {
-    test("convert a stream of 3.000.000 JSON elements within 1GB") {
-      stressMemoryTestBuilder(3000000) match {
-        case Left(e) =>
-          println(s"failed with $e")
-          assert(false)
-        case Right(count) =>
-          assert(count == 4999995)
-      }
+  test("convert a stream of 3.000.000 JSON elements within 1GB") {
+    stressMemoryTestBuilder(3000000) match {
+      case Left(e) =>
+        fail("failed with", e)
+      case Right(count) =>
+        assertEquals(count, 4999995L)
     }
   }
 

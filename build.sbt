@@ -38,10 +38,7 @@ scalacOptions := Seq(
 )
 
 Test / fork := true
-
 Test / javaOptions  ++= Seq("-Xmx1G")
-
-testFrameworks += new TestFramework("utest.runner.Framework")
 
 ScalariformKeys.preferences :=
   scalariformPreferences.value
@@ -52,13 +49,13 @@ ScalariformKeys.preferences :=
 
 libraryDependencies ++= {
   val commonsIoV = "2.11.0"
-  val utestV     = "0.7.10"
+  val munitV     = "0.7.28"
   val jawnV      = "1.2.0"
   val scalaCsvV  = "1.3.8"
   Seq(
      "org.typelevel"        %% "jawn-ast"   % jawnV
     ,"com.github.tototoshi" %% "scala-csv"  % scalaCsvV
     ,"commons-io"           %  "commons-io" % commonsIoV % Test
-    ,"com.lihaoyi"          %% "utest"      % utestV     % Test
+    ,"org.scalameta"        %% "munit"      % munitV     % Test
   )
 }

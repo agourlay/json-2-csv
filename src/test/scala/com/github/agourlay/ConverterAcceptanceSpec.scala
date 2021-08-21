@@ -5,24 +5,22 @@ import java.nio.charset.Charset
 
 import com.github.agourlay.json2Csv._
 import org.apache.commons.io.FileUtils
-import utest._
 
-object ConverterAcceptanceSpec extends TestSuite {
+class ConverterAcceptanceSpec extends munit.FunSuite {
 
-  val tests = Tests {
-    test("transform properly the nominal case") {
-      val inputFile = new File(getClass.getResource("/test.json").getPath)
-      val outputName = "delete.csv"
-      val resultOutputStream = new FileOutputStream(outputName)
-      Json2Csv.convert(inputFile, resultOutputStream)
+  test("transform properly the nominal case") {
+    val inputFile = new File(getClass.getResource("/test.json").getPath)
+    val outputName = "delete.csv"
+    val resultOutputStream = new FileOutputStream(outputName)
+    Json2Csv.convert(inputFile, resultOutputStream)
 
-      val resultFile = new File(outputName)
-      val resultFileContent = FileUtils.readFileToString(resultFile, Charset.defaultCharset)
-      FileUtils.forceDelete(resultFile)
+    val resultFile = new File(outputName)
+    val resultFileContent = FileUtils.readFileToString(resultFile, Charset.defaultCharset)
+    FileUtils.forceDelete(resultFile)
 
-      val referenceResultFile = new File(getClass.getResource("/test-json.csv").getPath)
-      val referenceResultContent = FileUtils.readFileToString(referenceResultFile, Charset.defaultCharset)
-      assert(resultFileContent == referenceResultContent)
-    }
+    val referenceResultFile = new File(getClass.getResource("/test-json.csv").getPath)
+    val referenceResultContent = FileUtils.readFileToString(referenceResultFile, Charset.defaultCharset)
+    assertEquals(resultFileContent, referenceResultContent)
   }
+
 }
