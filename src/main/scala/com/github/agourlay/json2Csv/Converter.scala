@@ -93,8 +93,7 @@ private object Converter {
     val groupedArray: Seq[(String, Array[Cell])] = values.groupBy(_.key.physicalHeader).toSeq
     val rowsNbToWrite = groupedArray.maxBy(_._2.length)._2.length
     val sortedRows = groupedArray.sortBy(_._1)
-    var rowIndex = 0
-    while (rowIndex < rowsNbToWrite) {
+    for (rowIndex <- 0 until rowsNbToWrite) {
       val row = sortedRows.map {
         case (_, vs) =>
           // Don't use Array.lift to avoid allocating an Option
@@ -102,7 +101,6 @@ private object Converter {
           render(json)
       }
       csvWriter.writeRow(row) //auto-flush
-      rowIndex += 1
     }
     rowsNbToWrite
   }

@@ -34,7 +34,9 @@ scalacOptions := Seq(
   "-language:implicitConversions",
   "-language:postfixOps",
   "-feature",
-  "-Ywarn-unused:imports"
+  "-Ywarn-unused:imports",
+  "-Wnonunit-statement",
+  "-Wperformance"
 )
 
 Test / fork := true

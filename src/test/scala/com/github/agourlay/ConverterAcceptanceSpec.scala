@@ -12,7 +12,7 @@ class ConverterAcceptanceSpec extends munit.FunSuite {
     val inputFile = new File(getClass.getResource("/test.json").getPath)
     val outputName = "delete.csv"
     val resultOutputStream = new FileOutputStream(outputName)
-    Json2Csv.convert(inputFile, resultOutputStream)
+    assert(Json2Csv.convert(inputFile, resultOutputStream).isRight)
 
     val resultFile = new File(outputName)
     val resultFileContent = FileUtils.readFileToString(resultFile, Charset.defaultCharset)
