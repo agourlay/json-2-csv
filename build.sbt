@@ -50,7 +50,7 @@ ScalariformKeys.preferences :=
     .setPreference(DanglingCloseParenthesis, Preserve)
 
 libraryDependencies ++= {
-  val commonsIoV = "2.11.0"
+  val commonsIoV = "2.12.0"
   val munitV     = "0.7.29"
   val jawnV      = "1.4.0"
   val scalaCsvV  = "1.3.10"
