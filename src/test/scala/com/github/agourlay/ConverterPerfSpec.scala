@@ -22,7 +22,7 @@ class ConverterPerfSpec extends munit.FunSuite {
   // Helper to stressTest memory.
   def stressMemoryTestBuilder(n: Int): Either[Exception, Long] = {
     // test.json containing 3 objects.
-    Json2Csv.convert(repeatTestFileContent(n / 3), NullOutputStream.NULL_OUTPUT_STREAM)
+    Json2Csv.convert(repeatTestFileContent(n / 3), NullOutputStream.INSTANCE)
   }
 
   // Helper to build Stream[String] from the test.json containing 3 objects.

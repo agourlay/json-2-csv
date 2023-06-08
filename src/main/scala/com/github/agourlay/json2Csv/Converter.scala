@@ -13,7 +13,7 @@ private object Converter {
   private val falseStr = "false"
   private val emptyStr = ""
 
-  def processJValue(j: JValue, progress: Progress, csvWriter: CSVWriter): Either[Exception, Progress] = j match {
+  private def processJValue(j: JValue, progress: Progress, csvWriter: CSVWriter): Either[Exception, Progress] = j match {
     case JObject(fields) =>
       val cells = loopOverKeys(fields, Key.emptyKey).toArray
       // Write headers if necessary
@@ -34,7 +34,7 @@ private object Converter {
       Left(new IllegalArgumentException(s"Found a non JSON object - $j"))
   }
 
-  def reconcileValues(knownKeys: Set[Key], cells: Array[Cell]): Array[Cell] = {
+  private def reconcileValues(knownKeys: Set[Key], cells: Array[Cell]): Array[Cell] = {
     val fakeValues = knownKeys.iterator.collect {
       case k if !cells.exists(_.key.physicalHeader == k.physicalHeader) => Cell(k, JNull)
     }.toArray
@@ -46,14 +46,14 @@ private object Converter {
   }
 
   // use initial mutable map from Jawn to avoid allocations
-  def loopOverKeys(fields: collection.mutable.Map[String, JValue], key: Key): Iterator[Cell] =
+  private def loopOverKeys(fields: collection.mutable.Map[String, JValue], key: Key): Iterator[Cell] =
     fields.iterator.flatMap {
       case (k, v) => jValueMatcher(key.addSegment(k))(v)
     }
 
-  def iteratorOneCell(key: Key, value: JValue): Iterator[Cell] = Iterator.single(Cell(key, value))
+  private def iteratorOneCell(key: Key, value: JValue): Iterator[Cell] = Iterator.single(Cell(key, value))
 
-  def jValueMatcher(key: Key)(value: JValue): Iterator[Cell] =
+  private def jValueMatcher(key: Key)(value: JValue): Iterator[Cell] =
     value match {
       case JObject(fields) =>
         loopOverKeys(fields, key)
@@ -69,7 +69,7 @@ private object Converter {
         iteratorOneCell(key, value)
     }
 
-  def mergeJValue(values: Array[JValue]): JValue =
+  private def mergeJValue(values: Array[JValue]): JValue =
     JString {
       values.iterator.map {
         case JString(jvalue)   => jvalue
@@ -83,13 +83,13 @@ private object Converter {
       }.mkString(", ")
     }
 
-  def isJArrayOfValues(vs: Array[JValue]): Boolean =
+  private def isJArrayOfValues(vs: Array[JValue]): Boolean =
     vs.forall {
       case JNull | JString(_) | LongNum(_) | DoubleNum(_) | DeferNum(_) | JTrue | JFalse => true
       case _                                                                             => false
     }
 
-  def writeCells(values: Array[Cell], csvWriter: CSVWriter): Long = {
+  private def writeCells(values: Array[Cell], csvWriter: CSVWriter): Long = {
     val groupedArray: Seq[(String, Array[Cell])] = values.groupBy(_.key.physicalHeader).toSeq
     val rowsNbToWrite = groupedArray.maxBy(_._2.length)._2.length
     val sortedRows = groupedArray.sortBy(_._1)
@@ -106,7 +106,7 @@ private object Converter {
   }
 
   //https://github.com/typelevel/jawn/issues/13
-  def render(v: JValue): String = v match {
+  private def render(v: JValue): String = v match {
     case JArray(values) if values.isEmpty => emptyStr
     case JNull                            => emptyStr
     case _                                => v.render(FastRenderer)
@@ -128,7 +128,7 @@ private object Converter {
         p.finish().flatMap(jsSeq => processJValues(progress, jsSeq, w))
     }
 
-  def processJValues(initProgress: Progress, jValues: collection.Seq[JValue], w: CSVWriter): Either[Exception, Progress] =
+  private def processJValues(initProgress: Progress, jValues: collection.Seq[JValue], w: CSVWriter): Either[Exception, Progress] =
     jValues.foldLeft[Either[Exception, Progress]](Right(initProgress)) {
       case (eitherAcc, n) => eitherAcc.flatMap { acc => processJValue(n, acc, w) }
     }
