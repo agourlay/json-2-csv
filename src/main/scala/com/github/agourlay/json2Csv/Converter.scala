@@ -69,19 +69,26 @@ private object Converter {
         iteratorOneCell(key, value)
     }
 
-  private def mergeJValue(values: Array[JValue]): JValue =
-    JString {
-      values.iterator.map {
-        case JString(jvalue)   => jvalue
-        case LongNum(jvalue)   => jvalue.toString
-        case DoubleNum(jvalue) => jvalue.toString
-        case DeferNum(jvalue)  => jvalue
-        case DeferLong(jvalue) => jvalue
-        case JTrue             => trueStr
-        case JFalse            => falseStr
-        case _                 => emptyStr
-      }.mkString(", ")
+  private def mergeJValue(values: Array[JValue]): JValue = {
+    val len = values.length
+    val builder = new StringBuilder(len * 10)
+    var i = 0
+    while (i < len) {
+      if (i > 0) builder.append(", ")
+      values(i) match {
+        case JString(jvalue)   => builder.append(jvalue)
+        case LongNum(jvalue)   => builder.append(jvalue.toString)
+        case DoubleNum(jvalue) => builder.append(jvalue.toString)
+        case DeferNum(jvalue)  => builder.append(jvalue)
+        case DeferLong(jvalue) => builder.append(jvalue)
+        case JTrue             => builder.append(trueStr)
+        case JFalse            => builder.append(falseStr)
+        case _                 => builder.append(emptyStr)
+      }
+      i += 1
     }
+    JString(builder.toString)
+  }
 
   private def isJArrayOfValues(vs: Array[JValue]): Boolean =
     vs.forall {
