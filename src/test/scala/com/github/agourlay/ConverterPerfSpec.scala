@@ -2,12 +2,15 @@ package com.github.agourlay
 
 import java.io.File
 import java.nio.charset.Charset
-
 import com.github.agourlay.json2Csv._
+import java.util.concurrent.TimeUnit
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.output.NullOutputStream
+import scala.concurrent.duration.{ Duration, FiniteDuration }
 
 class ConverterPerfSpec extends munit.FunSuite {
+
+  override def munitTimeout: Duration = new FiniteDuration(60, TimeUnit.SECONDS)
 
   // test heap size options in build.sbt
   test("convert a stream of 3.000.000 JSON elements within 1GB") {

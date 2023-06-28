@@ -6,6 +6,7 @@ import org.typelevel.jawn.AsyncParser
 import org.typelevel.jawn.ast.JParser._
 import org.typelevel.jawn.ast._
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 
 private object Converter {
 
@@ -97,17 +98,22 @@ private object Converter {
     }
 
   private def writeCells(values: Array[Cell], csvWriter: CSVWriter): Long = {
-    val groupedArray: Seq[(String, Array[Cell])] = values.groupBy(_.key.physicalHeader).toSeq
+    val groupedArray: Array[(String, Array[Cell])] = values.groupBy(_.key.physicalHeader).toArray
     val rowsNbToWrite = groupedArray.maxBy(_._2.length)._2.length
     val sortedRows = groupedArray.sortBy(_._1)
-    for (rowIndex <- 0 until rowsNbToWrite) {
-      val row = sortedRows.map {
-        case (_, vs) =>
-          // Don't use Array.lift to avoid allocating an Option
-          val json = if (rowIndex < vs.length) vs.apply(rowIndex).value else JNull
-          render(json)
+    val colCount = sortedRows.length
+    var rowIndex = 0
+    while (rowIndex < rowsNbToWrite) {
+      val rowBuffer = new ListBuffer[String]()
+      var colIndex = 0
+      while (colIndex < colCount) {
+        val vs = sortedRows(colIndex)._2
+        val json = if (rowIndex < vs.length) vs(rowIndex).value else JNull
+        rowBuffer += render(json)
+        colIndex += 1
       }
-      csvWriter.writeRow(row) //auto-flush
+      csvWriter.writeRow(rowBuffer.toList) //auto-flush
+      rowIndex += 1
     }
     rowsNbToWrite
   }
