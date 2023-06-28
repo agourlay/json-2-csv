@@ -1,10 +1,10 @@
 package com.github.agourlay.json2Csv
 
+import com.github.agourlay.json2Csv.Key.nestedColumnSeparator
 import com.github.tototoshi.csv.CSVWriter
 import org.typelevel.jawn.AsyncParser
 import org.typelevel.jawn.ast.JParser._
 import org.typelevel.jawn.ast._
-
 import scala.annotation.tailrec
 
 private object Converter {
@@ -147,14 +147,16 @@ object Progress {
   val empty: Progress = Progress(Set.empty[Key], 0L)
 }
 
-case class Key(revertedSegments: List[String]) {
-  val physicalHeader: String = revertedSegments.reverseIterator.mkString(Key.nestedColumnSeparator)
-  def addSegment(other: String): Key = copy(other :: revertedSegments)
+case class Key(physicalHeader: String) extends AnyVal {
+  def addSegment(other: String): Key = {
+    val newPhysicalHeader = if (physicalHeader.isEmpty) other else physicalHeader + nestedColumnSeparator + other
+    copy(newPhysicalHeader)
+  }
 }
 
 object Key {
   private val nestedColumnSeparator = "."
-  val emptyKey: Key = Key(Nil)
+  val emptyKey: Key = Key("")
 }
 
 case class Cell(key: Key, value: JValue)
