@@ -24,7 +24,8 @@ publishTo := Some(
   else
     "releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2")
 
-scalaVersion := "2.13.13"
+scalaVersion := "3.3.3"
+crossScalaVersions := Seq(scalaVersion.value, "2.13.13")
 
 scalacOptions := Seq(
   "-unchecked",
